@@ -1,59 +1,164 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 public class Player : MonoBehaviour
 {
-    private PlayerState _playerState = PlayerState.Idle;
+    [Header("Components")]
     private Animator _animator;
-    private Rigidbody2D _rigidbody;
-    [SerializeField] private float _speed = 1000f;
-    // Start is called before the first frame update
+    [SerializeField] private Rigidbody2D _rigidbody;
+
+    [Header("Movement Settings")]
+    [SerializeField] public float _speed = 5f;
+    [SerializeField] private float _jumpForce = 10f;
+    private float _horizontalInput;
+    private bool _facingRight = true;
+
+    [Header("State & Status")]
+    private PlayerState _currentState = PlayerState.Idle;
+    private bool _isGrounded = true;
+
+    // Start được gọi một lần trước frame đầu tiên
     void Start()
     {
         _animator = GetComponent<Animator>();
-       // _rigidbody = GetComponent<Rigidbody2D>();
+        
+        // Rigidbody nên được gán sẵn từ Inspector để đảm bảo không bị null
+        if (_rigidbody == null)
+        {
+            _rigidbody = GetComponent<Rigidbody2D>();
+        }
     }
 
-    // Update is called once per frame
+    // Update được gọi mỗi frame, lý tưởng cho việc xử lý input
     void Update()
     {
-        PlayerMovement();
-        PlayerAction();
+        HandleInput();
+        UpdateState();
         UpdateAnimation();
+        FlipCharacter();
     }
 
-    private void PlayerAction()
+    // FixedUpdate được gọi theo một chu kỳ thời gian cố định, lý tưởng cho các tính toán vật lý
+    void FixedUpdate()
     {
+        HandleMovement();
+    }
+
+    /// <summary>
+    /// Đọc và lưu trữ tất cả các input từ người dùng.
+    /// </summary>
+    private void HandleInput()
+    {
+        // Lấy giá trị input trục ngang (-1 cho A, 1 cho D, 0 nếu không nhấn)
+        _horizontalInput = Input.GetAxisRaw("Horizontal");
+
+        // Xử lý input tấn công
         if (Input.GetKeyDown(KeyCode.J))
         {
-            _playerState = PlayerState.Attacking;
+            _currentState = PlayerState.Attacking;
+        }
+
+        // Xử lý input nhảy (chỉ thực hiện khi đang trên mặt đất)
+        if (Input.GetKeyDown(KeyCode.Space) && _isGrounded)
+        {
+            Jump();
         }
     }
 
-    private void PlayerMovement()
+    /// <summary>
+    /// Cập nhật trạng thái của người chơi dựa trên các điều kiện hiện tại.
+    /// Ưu tiên: Tấn công > Nhảy > Chạy > Đứng yên.
+    /// </summary>
+    private void UpdateState()
     {
-        float actuallySpeed = Input.GetAxis("Horizontal") * _speed * Time.deltaTime; ;
-        if (Input.GetKey(KeyCode.A))
+        // Nếu đang tấn công, không cho phép chuyển sang trạng thái khác
+        // (Bạn có thể reset trạng thái này bằng Animation Event khi animation tấn công kết thúc)
+        if (_currentState == PlayerState.Attacking) return;
+        // Xác định trạng thái dựa trên việc có đang ở trên không hay không
+        if (!_isGrounded)
         {
-            _playerState = PlayerState.Running;
-            transform.localScale = new Vector3(-1*Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
-        }
-        else if (Input.GetKey(KeyCode.D))
-        {
-            _playerState = PlayerState.Running;
-            transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+            _currentState = PlayerState.Jumping;
         }
         else
         {
-            _playerState = PlayerState.Idle;
+            // Nếu trên mặt đất, kiểm tra xem có đang di chuyển không
+            if (_horizontalInput != 0)
+            {
+                _currentState = PlayerState.Running;
+            }
+            else
+            {
+                _currentState = PlayerState.Idle;
+            }
         }
-       // _rigidbody.velocity =  new Vector2(actuallySpeed, _rigidbody.velocity.y);
-        transform.position = new Vector3(actuallySpeed + transform.position.x, transform.position.y, transform.position.z);
+
     }
-    
+
+    /// <summary>
+    /// Cập nhật animation dựa trên trạng thái hiện tại.
+    /// </summary>
     private void UpdateAnimation()
     {
-        _animator.SetInteger("State", (int)_playerState);
+        if (_animator.GetInteger("State") == (int) _currentState) return;
+ 
+
+        _animator.SetInteger("State", (int)_currentState);
+        
+    }
+    
+    /// <summary>
+    /// Xử lý di chuyển vật lý của nhân vật.
+    /// </summary>
+    private void HandleMovement()
+    {
+        if (_currentState != PlayerState.Attacking)
+        {
+            _rigidbody.velocity = new Vector2(_horizontalInput * _speed, _rigidbody.velocity.y);
+        }
+        else
+        {
+            _rigidbody.velocity = new Vector2(0, _rigidbody.velocity.y);
+        }
+    }
+    
+    /// <summary>
+    /// Áp dụng một lực tức thời để nhân vật nhảy lên.
+    /// </summary>
+    private void Jump()
+    {
+        _rigidbody.AddForce(new Vector2(0, _jumpForce), ForceMode2D.Impulse);
+        _isGrounded = false; 
+    }
+
+    /// <summary>
+    /// Lật hướng nhìn của nhân vật.
+    /// </summary>
+    private void FlipCharacter()
+    {
+        if ((_horizontalInput > 0 && !_facingRight) || (_horizontalInput < 0 && _facingRight))
+        {
+            _facingRight = !_facingRight;
+            transform.Rotate(0f, 180f, 0f);
+        }
+    }
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            _isGrounded = true;
+        }
+    }
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            _isGrounded = false;
+        }
+    }
+    
+    public void FinishAttack()
+    {
+        _currentState = PlayerState.Idle;
+        
     }
 }

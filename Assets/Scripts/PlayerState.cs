@@ -3,5 +3,6 @@
     Idle,
     Running,
     Attacking,
-    
+    Jumping,
+    JumpToFall
 }
