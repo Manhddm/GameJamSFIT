@@ -53,7 +53,7 @@ public class Player : MonoBehaviour
         _horizontalInput = Input.GetAxisRaw("Horizontal");
 
         // Xử lý input tấn công
-        if (Input.GetKeyDown(KeyCode.J))
+        if (Input.GetMouseButtonDown(0) && _isGrounded)
         {
             _currentState = PlayerState.Attacking;
         }

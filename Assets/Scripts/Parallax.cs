@@ -22,7 +22,7 @@ public class Parallax : MonoBehaviour
 
     private void ParallaxScroll()
     {
-        _offset = _parallaxEffect * Time.fixedDeltaTime * 5f;
+        _offset += _parallaxEffect * Time.fixedDeltaTime * 5f;
         _material.SetTextureOffset("_MainTex", Vector2.right * _offset);
         
     }
