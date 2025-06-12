@@ -11,7 +11,7 @@ public class EnemyAI : MonoBehaviour
     private List<Transform> waypoints = new List<Transform>();
     private int currentWaypoint = 0;
 
-    private void Awake()
+    private void Start()
     {
         _movementSystem = GetComponent<MovementSystem>();
         InitializedWaypoints();
@@ -40,6 +40,25 @@ public class EnemyAI : MonoBehaviour
     void AutoMovement()
     {
         Transform target = waypoints[currentWaypoint];
-        float distanceWaypoint = Vector2.Distance(_playerTarget.position, target.position);
+        float distanceToWaypoint = Vector2.Distance(transform.position, target.position);
+        float waypointReachedThreshold = 0.1f;
+        if (distanceToWaypoint <= waypointReachedThreshold)
+        {
+            // Nếu đã đến, chuyển sang waypoint tiếp theo
+            currentWaypoint++;
+
+            // 4. Nếu đã đi hết vòng, quay lại điểm đầu tiên
+            if (currentWaypoint >= waypoints.Count)
+            {
+                currentWaypoint = 0;
+            }
+            
+            // Cập nhật lại mục tiêu sau khi đã đổi index
+            target = waypoints[currentWaypoint];
+        }
+
+        // 5. Tính toán hướng và ra lệnh di chuyển
+        Vector2 direction = (target.position - transform.position).normalized;
+        _movementSystem.Move(direction);
     }
 }

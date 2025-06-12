@@ -7,13 +7,13 @@ public class MovementSystem : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float moveSpeed;
-    private Rigidbody2D _rb;
+    [SerializeField]private Rigidbody2D _rb;
     private Vector2 _offset;
     public float MoveSpeed{get=>moveSpeed;set=>moveSpeed=value;}
 
-    private void Awake()
+    private void Start()
     {
-        _rb = GetComponent<Rigidbody2D>();
+        
         _offset = Vector2.zero;
     }
     private void FixedUpdate()
