@@ -6,7 +6,8 @@ public enum BossState
 {
     IdleFL,
     IdleFR,
-    Walk,
+    WalkFL,
+    WalkFR,
     Attack
 }
 public class Boss : MonoBehaviour
@@ -33,11 +34,11 @@ public class Boss : MonoBehaviour
     {
         if (rb.position.x < pos)
         {
-            currentState = BossState.IdleFL;
+            currentState = BossState.WalkFL;
         }
         else if (rb.position.x > pos)
         {
-            currentState = BossState.IdleFR;
+            currentState = BossState.WalkFR;
         }
 
         pos = rb.position.x;
