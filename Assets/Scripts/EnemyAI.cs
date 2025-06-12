@@ -1,9 +1,7 @@
-    using System;
-    using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 [RequireComponent(typeof(MovementSystem))]
-public class EnemyAI : MonoBehaviour
+public class EnemyAI : MonoBehaviour    
 {
     private Transform _playerTarget;
     private MovementSystem _movementSystem;
