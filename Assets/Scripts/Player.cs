@@ -17,6 +17,8 @@ public class Player : MonoBehaviour
     private PlayerState _currentState = PlayerState.Idle;
     private bool _isGrounded = true;
 
+    #region MonoBehaviour
+
     // Start được gọi một lần trước frame đầu tiên
     void Start()
     {
@@ -44,6 +46,8 @@ public class Player : MonoBehaviour
         HandleMovement();
     }
 
+    #endregion
+
     /// <summary>
     /// Đọc và lưu trữ tất cả các input từ người dùng.
     /// </summary>
@@ -55,7 +59,8 @@ public class Player : MonoBehaviour
         // Xử lý input tấn công
         if (Input.GetMouseButtonDown(0) && _isGrounded)
         {
-            _currentState = PlayerState.Attacking;
+            _currentState = PlayerState.Attack;
+            
         }
 
         // Xử lý input nhảy (chỉ thực hiện khi đang trên mặt đất)
@@ -73,22 +78,25 @@ public class Player : MonoBehaviour
     {
         // Nếu đang tấn công, không cho phép chuyển sang trạng thái khác
         // (Bạn có thể reset trạng thái này bằng Animation Event khi animation tấn công kết thúc)
-        if (_currentState == PlayerState.Attacking) return;
+        if (_currentState == PlayerState.Attack) return;
         // Xác định trạng thái dựa trên việc có đang ở trên không hay không
         if (!_isGrounded)
         {
-            _currentState = PlayerState.Jumping;
+            _currentState = PlayerState.JumpUp;
+            
         }
         else
         {
             // Nếu trên mặt đất, kiểm tra xem có đang di chuyển không
             if (_horizontalInput != 0)
             {
-                _currentState = PlayerState.Running;
+                _currentState = PlayerState.Run;
+              
             }
             else
             {
                 _currentState = PlayerState.Idle;
+                
             }
         }
 
@@ -99,11 +107,7 @@ public class Player : MonoBehaviour
     /// </summary>
     private void UpdateAnimation()
     {
-        if (_animator.GetInteger("State") == (int) _currentState) return;
- 
-
-        _animator.SetInteger("State", (int)_currentState);
-        
+        _animator.Play(_currentState.ToString());
     }
     
     /// <summary>
@@ -111,7 +115,7 @@ public class Player : MonoBehaviour
     /// </summary>
     private void HandleMovement()
     {
-        if (_currentState != PlayerState.Attacking)
+        if (_currentState != PlayerState.Attack)
         {
             _rigidbody.velocity = new Vector2(_horizontalInput * _speed, _rigidbody.velocity.y);
         }
@@ -159,6 +163,5 @@ public class Player : MonoBehaviour
     public void FinishAttack()
     {
         _currentState = PlayerState.Idle;
-        
     }
 }

@@ -1,8 +1,8 @@
 ﻿public enum PlayerState
 {
     Idle,
-    Running,
-    Attacking,
-    Jumping,
+    Run,
+    Attack,
+    JumpUp,
     JumpToFall
 }
