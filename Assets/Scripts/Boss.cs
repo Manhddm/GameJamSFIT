@@ -16,6 +16,7 @@ public class Boss : MonoBehaviour
     private Rigidbody2D rb;
     private Animator animator;
     private BossState currentState = BossState.IdleFL;
+    
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();

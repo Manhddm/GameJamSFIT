@@ -13,7 +13,10 @@ public class MovementSystem : MonoBehaviour
 
     private void Start()
     {
-        
+        if (_rb == null)
+        {
+            _rb = GetComponent<Rigidbody2D>();
+        }
         _offset = Vector2.zero;
     }
     private void FixedUpdate()

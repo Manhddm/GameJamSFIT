@@ -1,5 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
+public enum State
+{
+    Idle,
+    Walk,
+    Run
+}
+
+
 [RequireComponent(typeof(MovementSystem))]
 public class EnemyAI : MonoBehaviour    
 {
@@ -8,10 +16,16 @@ public class EnemyAI : MonoBehaviour
     [SerializeField] private Transform waypointContainer;
     private List<Transform> waypoints = new List<Transform>();
     private int currentWaypoint = 0;
+    private Rigidbody2D _rb;
+    private State state = State.Idle;
+    private Animator _animator;
+    private bool _facingLeft = true;
 
     private void Start()
     {
         _movementSystem = GetComponent<MovementSystem>();
+        _rb = GetComponent<Rigidbody2D>();
+        _animator = GetComponent<Animator>();
         InitializedWaypoints();
     }
 
@@ -22,9 +36,14 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
+        int cnt = 1;
         foreach (Transform child in waypointContainer)
         {
+            if (cnt == 1 )child.transform.position = new Vector3(transform.position.x + 4, transform.position.y, transform.position.z);
+            if (cnt == 2) child.transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z);
+            if (cnt == 3) child.transform.position = new Vector3(transform.position.x - 4, transform.position.y, transform.position.z);
             waypoints.Add(child);
+            cnt++;
         }
     }
     private void Update()
@@ -33,6 +52,9 @@ public class EnemyAI : MonoBehaviour
         {
             AutoMovement();
         }
+        UpdateState();
+       // FlipCharacter();
+        UpdateAnimation();
     }
 
     void AutoMovement()
@@ -42,6 +64,7 @@ public class EnemyAI : MonoBehaviour
         float waypointReachedThreshold = 0.1f;
         if (distanceToWaypoint <= waypointReachedThreshold)
         {
+           // Delay();
             // Nếu đã đến, chuyển sang waypoint tiếp theo
             currentWaypoint++;
 
@@ -59,4 +82,28 @@ public class EnemyAI : MonoBehaviour
         Vector2 direction = (target.position - transform.position).normalized;
         _movementSystem.Move(direction);
     }
+
+    
+    private void UpdateState()
+    {
+
+    }
+
+    private void FlipCharacter()
+    {
+        if (_rb.position.x > 0)
+        {
+            transform.transform.Rotate(0f, 180f, 0f);
+        }
+    }
+
+    private void UpdateAnimation()
+    {
+        _animator.Play(state.ToString());
+    }
+
+    //private IEnumerator<> Delay()
+    //{
+    //    yield return new WaitForSeconds(2f);
+  //  }
 }

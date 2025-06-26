@@ -1,29 +1,23 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Parallax : MonoBehaviour
 {
-    private Material _material;
-    [SerializeField] private float _parallaxEffect = 0.01f;
-    [SerializeField] private Player _player;
-    private float _offset;
-    // Start is called before the first frame update
-    void Start()
-    {
-        _material = GetComponent<Renderer>().material;
+    public Camera cam;
+    public Transform followTarget;
+    private Vector2 _startPos;
+    private Vector2 CamMoveSinceStart => (Vector2)cam.transform.position - _startPos;
+    private float ZDistanceFromTarget => transform.position.z - followTarget.position.z;
+    private float ClippingPlane => (cam.transform.position.z + (ZDistanceFromTarget > 0? cam.farClipPlane: cam.nearClipPlane));
+    private float ParallaxFactor => Mathf.Abs(ZDistanceFromTarget) /ClippingPlane;
+    private float _startingZ;
+    void Start(){
+        _startPos = transform.position;
+        _startingZ = transform.position.z;
     }
 
-    // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
-        ParallaxScroll();
-    }
-
-    private void ParallaxScroll()
-    {
-        _offset += _parallaxEffect * Time.fixedDeltaTime * 5f;
-        _material.SetTextureOffset("_MainTex", Vector2.right * _offset);
-        
+        Vector2 newPos = _startPos * CamMoveSinceStart / ParallaxFactor;
+        transform.position = new Vector3(newPos.x, newPos.y, _startingZ);
     }
 }
