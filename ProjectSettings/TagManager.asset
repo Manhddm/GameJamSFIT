@@ -6,11 +6,12 @@ TagManager:
   tags:
   - Ground
   - BackGround
+  - Tiles
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Tiles
   - Water
   - UI
   - Ground
@@ -40,11 +41,20 @@ TagManager:
   - 
   - 
   m_SortingLayers:
-  - name: Default
-    uniqueID: 0
-    locked: 0
   - name: BackGround
     uniqueID: 3041221783
+    locked: 0
+  - name: 1
+    uniqueID: 2397692497
+    locked: 0
+  - name: 2
+    uniqueID: 3629277115
+    locked: 0
+  - name: 3
+    uniqueID: 3410194913
+    locked: 0
+  - name: Default
+    uniqueID: 0
     locked: 0
   - name: Ground
     uniqueID: 3972102407

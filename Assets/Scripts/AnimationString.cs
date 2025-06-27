@@ -7,4 +7,5 @@
     internal static string isJumping = "isJumping";
     internal static string isOnWall = "isOnWall";
     internal static string isOnCeiling = "isOnCeiling";
+    internal static string isAttacking = "isAttack";
 }

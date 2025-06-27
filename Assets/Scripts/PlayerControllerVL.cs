@@ -14,6 +14,8 @@ public class PLayerControllerVl : MonoBehaviour
    private bool _isRunning = false;
    private bool _isFacingRight = true;
    private bool _isJumping = false;
+   [SerializeField]
+   private bool _isAttacking = false;
    public float highJump = 100f;
    private TouchGround _touchGround;
    #region Events
@@ -38,6 +40,12 @@ public class PLayerControllerVl : MonoBehaviour
          
       }
    }
+
+   public bool IsAttacking
+   {
+      get => _isAttacking;
+      set => _isAttacking = value;
+   }
    
    #endregion
   
@@ -54,21 +62,11 @@ public class PLayerControllerVl : MonoBehaviour
       _touchGround = GetComponent<TouchGround>();
       IsRunning = false;
    }
-
-   void Start()
-   {
-        
-   }
-    
-   void Update()
-   {
-     
-   }
-
    void FixedUpdate()
    {
       _rb.velocity = new Vector2(_moveInput.x*CurrentSpeed*Time.fixedDeltaTime, _rb.velocity.y ) ;
       _animator.SetFloat(AnimationString.yVelocity, _rb.velocity.y);
+      
    }
    #endregion
 
@@ -79,6 +77,7 @@ public class PLayerControllerVl : MonoBehaviour
       _moveInput = context.ReadValue<Vector2>();
       IsMoving = _moveInput != Vector2.zero;
       SetFacing(_moveInput);
+      
    }
 
    private void SetFacing(Vector2 moveInput)
@@ -99,12 +98,23 @@ public class PLayerControllerVl : MonoBehaviour
          CurrentSpeed = IsRunning ? runSpeed : walkSpeed;
       }
    }
-
+   
    public void OnJump(InputAction.CallbackContext context)
    {
-      if (!context.started || !_touchGround.IsGrounded) return;
+      if (!context.started || !_touchGround.IsGrounded || _isAttacking) return;
       _animator.SetTrigger(AnimationString.isJumping);
       _rb.velocity = new Vector2(_rb.velocity.x, highJump);
+   }
+
+   public void OnAttack(InputAction.CallbackContext context)
+   {
+      if (context.started && _touchGround.IsGrounded)
+      {
+         _isAttacking = true;
+         _animator.SetTrigger(AnimationString.isAttacking);
+         StartCoroutine(WaitForAnimationToFinish("PlayerAttack01", 0));
+      }
+  
    }
    #endregion
 
@@ -114,7 +124,7 @@ public class PLayerControllerVl : MonoBehaviour
    {
       get
       {
-         if (IsMoving && !_touchGround.IsOnWall)
+         if (IsMoving && !_touchGround.IsOnWall && !IsAttacking)
          {
             if (IsRunning)
             {
@@ -127,7 +137,19 @@ public class PLayerControllerVl : MonoBehaviour
       }
       set{}
    }
-   
+   IEnumerator WaitForAnimationToFinish(string stateName, int layerIndex = 0)
+   {
+      //Animator animator = GetComponent<Animator>();
+    
+      // Chờ cho đến khi animation bắt đầu
+      //yield return new WaitUntil(() => _animator.GetCurrentAnimatorStateInfo(layerIndex).IsName(stateName));
+    
+      // Chờ cho đến khi animation kết thúc (normalizedTime >= 1)
+      yield return new WaitWhile(() => 
+         _animator.GetCurrentAnimatorStateInfo(layerIndex).normalizedTime <= 1f );
+      _isAttacking = false;
+     
+   }
 
    #endregion
 }

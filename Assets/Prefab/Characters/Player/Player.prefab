@@ -128,10 +128,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b244cec3ad5f483458b3f3a3165ca8c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkSpeed: 30
-  runSpeed: 20
-  currentSpeed: 0
-  highJump: 100
+  walkSpeed: 100
+  runSpeed: 300
+  _isAttacking: 0
+  highJump: 50
 --- !u!114 &3905928552995778101
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -178,7 +178,19 @@ MonoBehaviour:
     m_ActionId: 1af07482-52ca-4745-ab6b-7e09eb685206
     m_ActionName: Player/Look[/Mouse/delta]
   - m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 742431184352901787}
+        m_TargetAssemblyTypeName: PLayerControllerVl, Assembly-CSharp
+        m_MethodName: OnAttack
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_ActionId: 398fadd9-50a9-4f07-b3f9-35cfecd5b406
     m_ActionName: Player/Attack[/Mouse/leftButton]
   - m_PersistentCalls:
@@ -305,3 +317,4 @@ MonoBehaviour:
     maxDepth: 0
     minNormalAngle: 0
     maxNormalAngle: 0
+  isOnWall: 0
