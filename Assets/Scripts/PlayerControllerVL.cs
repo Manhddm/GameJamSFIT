@@ -5,17 +5,18 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 public class PLayerControllerVl : MonoBehaviour
 {
+   [Range(0f,200f)]
    public float walkSpeed = 10f;
+   [Range(0f,600f)]
    public float runSpeed = 20f;
-
+   [SerializeField]
+   private float currentSpeed = 0f;
 
    private Vector2 _moveInput;
    private bool _isMoving = false;
    private bool _isRunning = false;
    private bool _isFacingRight = true;
    private bool _isJumping = false;
-   [SerializeField]
-   private bool _isAttacking = false;
    public float highJump = 100f;
    private TouchGround _touchGround;
    #region Events
@@ -40,13 +41,17 @@ public class PLayerControllerVl : MonoBehaviour
          
       }
    }
-
-   public bool IsAttacking
-   {
-      get => _isAttacking;
-      set => _isAttacking = value;
-   }
    
+
+   public bool CanMove
+   {
+      get
+      {
+         return _animator.GetBool(AnimationString.canMove);
+         
+      }
+      set{}
+   }
    #endregion
   
 
@@ -101,8 +106,8 @@ public class PLayerControllerVl : MonoBehaviour
    
    public void OnJump(InputAction.CallbackContext context)
    {
-      if (!context.started || !_touchGround.IsGrounded || _isAttacking) return;
-      _animator.SetTrigger(AnimationString.isJumping);
+      if (!context.started || !_touchGround.IsGrounded || !CanMove) return;
+      _animator.SetTrigger(AnimationString.jumpTricgger);
       _rb.velocity = new Vector2(_rb.velocity.x, highJump);
    }
 
@@ -110,9 +115,8 @@ public class PLayerControllerVl : MonoBehaviour
    {
       if (context.started && _touchGround.IsGrounded)
       {
-         _isAttacking = true;
-         _animator.SetTrigger(AnimationString.isAttacking);
-         StartCoroutine(WaitForAnimationToFinish("PlayerAttack01", 0));
+         _animator.SetTrigger(AnimationString.attackTrigger);
+        
       }
   
    }
@@ -120,36 +124,38 @@ public class PLayerControllerVl : MonoBehaviour
 
    #region UpdateLogic
 
-   private float CurrentSpeed
+   
+   public float CurrentSpeed
    {
       get
       {
-         if (IsMoving && !_touchGround.IsOnWall && !IsAttacking)
+         if (CanMove)
          {
-            if (IsRunning)
+            if (IsMoving && !_touchGround.IsOnWall)
             {
-               return runSpeed;
+               if (IsRunning)
+               {
+                  currentSpeed = runSpeed;
+               }
+               else
+               {
+                  currentSpeed = walkSpeed;
+               }
+               return currentSpeed;
+               
             }
-
-            return walkSpeed;
+            else
+            {
+               return 0f;
+            }
          }
+         else return 0f;
+
          return 0f;
       }
       set{}
    }
-   IEnumerator WaitForAnimationToFinish(string stateName, int layerIndex = 0)
-   {
-      //Animator animator = GetComponent<Animator>();
-    
-      // Chờ cho đến khi animation bắt đầu
-      //yield return new WaitUntil(() => _animator.GetCurrentAnimatorStateInfo(layerIndex).IsName(stateName));
-    
-      // Chờ cho đến khi animation kết thúc (normalizedTime >= 1)
-      yield return new WaitWhile(() => 
-         _animator.GetCurrentAnimatorStateInfo(layerIndex).normalizedTime <= 1f );
-      _isAttacking = false;
-     
-   }
+
 
    #endregion
 }

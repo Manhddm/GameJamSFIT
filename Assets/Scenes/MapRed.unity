@@ -255,6 +255,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cam: {fileID: 519420031}
   followTarget: {fileID: 2083119801}
+  parallaxEffectMultiplier: 0.3
+  useManualParallaxFactor: 1
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -579,6 +581,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cam: {fileID: 519420031}
   followTarget: {fileID: 2083119801}
+  parallaxEffectMultiplier: 0.3
+  useManualParallaxFactor: 1
 --- !u!1 &721593541
 GameObject:
   m_ObjectHideFlags: 0
@@ -678,6 +682,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cam: {fileID: 519420031}
   followTarget: {fileID: 2083119801}
+  parallaxEffectMultiplier: 0.32
+  useManualParallaxFactor: 1
 --- !u!1 &802820643
 GameObject:
   m_ObjectHideFlags: 0
@@ -8620,15 +8626,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 742431184352901787, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
       propertyPath: highJump
-      value: 10
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 742431184352901787, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
       propertyPath: runSpeed
-      value: 300
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 742431184352901787, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
       propertyPath: walkSpeed
-      value: 150
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 742431184352901787, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
+      propertyPath: _isAttacking
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6464028024716261302, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
       propertyPath: castFilter.useLayerMask
@@ -8691,7 +8701,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 639053024673849337, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
-      insertIndex: -1
+      insertIndex: 7
       addedObject: {fileID: 2083119802}
   m_SourcePrefab: {fileID: 100100000, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
 --- !u!1660057539 &9223372036854775807
