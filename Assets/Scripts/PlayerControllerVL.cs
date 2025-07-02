@@ -82,7 +82,6 @@ public class PLayerControllerVl : MonoBehaviour
       _moveInput = context.ReadValue<Vector2>();
       IsMoving = _moveInput != Vector2.zero;
       SetFacing(_moveInput);
-      
    }
 
    private void SetFacing(Vector2 moveInput)
@@ -100,13 +99,15 @@ public class PLayerControllerVl : MonoBehaviour
       if (context.started)
       {
          IsRunning = !IsRunning;
-         CurrentSpeed = IsRunning ? runSpeed : walkSpeed;
+         
       }
    }
    
    public void OnJump(InputAction.CallbackContext context)
    {
+      
       if (!context.started || !_touchGround.IsGrounded || !CanMove) return;
+      
       _animator.SetTrigger(AnimationString.jumpTricgger);
       _rb.velocity = new Vector2(_rb.velocity.x, highJump);
    }
@@ -144,18 +145,10 @@ public class PLayerControllerVl : MonoBehaviour
                return currentSpeed;
                
             }
-            else
-            {
-               return 0f;
-            }
+            
          }
-         else return 0f;
-
          return 0f;
       }
-      set{}
    }
-
-
    #endregion
 }

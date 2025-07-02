@@ -5,134 +5,62 @@ using UnityEngine.Events;
 
 public class HealthSystem : MonoBehaviour
 {
-    [Header("Stats")]
-    [SerializeField] private float currentHealth;
+    [Header("Health Settings")]
     [SerializeField] private float maxHealth = 100f;
-    
-    [Header("Settings")]
-    [SerializeField] private bool canTakeDamageWhenDead = false; // Có thể nhận damage khi đã chết không
-    [SerializeField] private bool regenerateHealth = false; // Có tự hồi máu không
-    [SerializeField] private float regenRate = 1f; // Tốc độ hồi máu per second
-    [SerializeField] private float regenDelay = 3f; // Delay sau khi nhận damage mới bắt đầu hồi
+    [SerializeField] private float currentHealth;
     
     [Header("Events")]
-    [SerializeField] public UnityEvent onDie;
-    [SerializeField] private UnityEvent onTakeDamage;
-    [SerializeField] private UnityEvent onHeal;
-    [SerializeField] private UnityEvent onHealthChanged; // Event khi health thay đổi (cho UI)
+    public UnityEvent onDie;
+    public UnityEvent onTakeDamage;
+    public UnityEvent onHeal;
     
-    // Tracking states
-    private bool _isDead = false;
-    private float _lastDamageTime;
-    private Coroutine _regenCoroutine;
-
-    #region MonoBehaviour
-
+    private bool isDead = false;
+    
+    #region Properties
+    public float CurrentHealth => currentHealth;
+    public float MaxHealth => maxHealth;
+    public float HealthPercentage => maxHealth > 0 ? currentHealth / maxHealth : 0f;
+    public bool IsDead => isDead;
+    #endregion
+    
     void Awake()
     {
-        // Đảm bảo currentHealth không vượt quá maxHealth
-        currentHealth = Mathf.Min(currentHealth, maxHealth);
+        // Khởi tạo máu đầy nếu chưa được set
         if (currentHealth <= 0)
         {
-            currentHealth = maxHealth; // Set full health nếu không được gán
+            currentHealth = maxHealth;
         }
     }
-
-    void Start()
-    {
-        // Bắt đầu regen nếu được enable
-        if (regenerateHealth && !_isDead)
-        {
-            StartRegeneration();
-        }
-    }
-
-    #endregion
-
-    #region Properties
-    public float CurrentHealth 
-    { 
-        get => currentHealth; 
-        private set 
-        {
-            float oldHealth = currentHealth;
-            currentHealth = Mathf.Clamp(value, 0f, maxHealth);
-            
-            // Trigger event nếu health thay đổi
-            if (!Mathf.Approximately(oldHealth, currentHealth))
-            {
-                onHealthChanged?.Invoke();
-            }
-        } 
-    }
     
-    public float MaxHealth 
-    { 
-        get => maxHealth; 
-        set 
-        {
-            maxHealth = Mathf.Max(value, 1f); // Đảm bảo maxHealth ít nhất là 1
-            // Adjust current health nếu vượt quá maxHealth mới
-            if (currentHealth > maxHealth)
-            {
-                CurrentHealth = maxHealth;
-            }
-        } 
-    }
-    
-    public bool IsDead => _isDead;
-    public float HealthPercentage => maxHealth > 0 ? currentHealth / maxHealth : 0f;
-    public bool IsFullHealth => Mathf.Approximately(currentHealth, maxHealth);
-
-    #endregion
-
-    #region Public Methods
-
     public void TakeDamage(float damage)
     {
-        // LOGIC ĐÚNG: Kiểm tra điều kiện trước khi xử lý
-        if (_isDead && !canTakeDamageWhenDead)
-        {
-            return; // Không thể nhận damage khi đã chết
-        }
+        // Không nhận damage khi đã chết hoặc damage <= 0
+        if (isDead || damage <= 0) return;
         
-        if (damage <= 0)
-        {
-            return; // Damage phải > 0
-        }
-
-        // Trừ máu TRƯỚC khi check điều kiện
-        CurrentHealth -= damage;
-        _lastDamageTime = Time.time;
+        currentHealth -= damage;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
         
         // Trigger damage event
         onTakeDamage?.Invoke();
         
-        // Restart regen timer
-        if (regenerateHealth)
-        {
-            RestartRegeneration();
-        }
-        
-        // Check death AFTER taking damage
-        if (currentHealth <= 0 && !_isDead)
+        // Check death
+        if (currentHealth <= 0)
         {
             Die();
         }
     }
-
+    
     public void Heal(float healAmount)
     {
-        if (_isDead || healAmount <= 0)
-        {
-            return;
-        }
+        // Không hồi máu khi đã chết hoặc heal <= 0
+        if (isDead || healAmount <= 0) return;
         
-        float oldHealth = currentHealth;
-        CurrentHealth += healAmount;
+        float previousHealth = currentHealth;
+        currentHealth += healAmount;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
         
-        // Trigger heal event nếu thực sự hồi được máu
-        if (currentHealth > oldHealth)
+        // Chỉ trigger heal event nếu thực sự hồi được máu
+        if (currentHealth > previousHealth)
         {
             onHeal?.Invoke();
         }
@@ -140,131 +68,67 @@ public class HealthSystem : MonoBehaviour
     
     public void SetHealth(float newHealth)
     {
-        float oldHealth = currentHealth;
-        CurrentHealth = newHealth;
+        currentHealth = Mathf.Clamp(newHealth, 0, maxHealth);
         
-        // Check death nếu health = 0
-        if (currentHealth <= 0 && !_isDead)
+        if (currentHealth <= 0 && !isDead)
         {
             Die();
         }
-        // Hoặc revive nếu từ chết trở về sống
-        else if (currentHealth > 0 && _isDead)
-        {
-            Revive();
-        }
-    }
-    
-    public void RestoreToFull()
-    {
-        SetHealth(maxHealth);
     }
     
     public void Kill()
     {
         SetHealth(0);
     }
-
-    public void Revive(float reviveHealth = -1f)
-    {
-        if (!_isDead) return;
-        
-        _isDead = false;
-        
-        // Set health to full or specified amount
-        if (reviveHealth < 0)
-        {
-            CurrentHealth = maxHealth;
-        }
-        else
-        {
-            CurrentHealth = reviveHealth;
-        }
-        
-        // Restart regen if enabled
-        if (regenerateHealth)
-        {
-            StartRegeneration();
-        }
-    }
-
-    #endregion
-
-    #region Private Methods
-
+    
     private void Die()
     {
-        if (_isDead) return; // Đã chết rồi thì không die nữa
+        if (isDead) return;
         
-        _isDead = true;
-        CurrentHealth = 0; // Đảm bảo health = 0
-        
-        // Stop regeneration
-        if (_regenCoroutine != null)
-        {
-            StopCoroutine(_regenCoroutine);
-            _regenCoroutine = null;
-        }
-        
+        isDead = true;
+        currentHealth = 0;
         onDie?.Invoke();
     }
     
-    private void StartRegeneration()
+    // Optional: Hồi sinh đơn giản
+    public void Revive(float reviveHealth = -1)
     {
-        if (_regenCoroutine != null)
-        {
-            StopCoroutine(_regenCoroutine);
-        }
-        _regenCoroutine = StartCoroutine(RegenerateHealth());
-    }
-    
-    private void RestartRegeneration()
-    {
-        if (_regenCoroutine != null)
-        {
-            StopCoroutine(_regenCoroutine);
-        }
-        _regenCoroutine = StartCoroutine(RegenerateHealthWithDelay());
-    }
-    
-    private IEnumerator RegenerateHealth()
-    {
-        while (!_isDead && regenerateHealth)
-        {
-            if (currentHealth < maxHealth)
-            {
-                float oldHealth = currentHealth;
-                CurrentHealth += regenRate * Time.deltaTime;
-                
-                if (currentHealth > oldHealth)
-                {
-                    onHeal?.Invoke();
-                }
-            }
-            yield return null;
-        }
-    }
-    
-    private IEnumerator RegenerateHealthWithDelay()
-    {
-        // Chờ delay sau damage
-        yield return new WaitForSeconds(regenDelay);
+        if (!isDead) return;
         
-        // Bắt đầu regen
-        yield return StartCoroutine(RegenerateHealth());
+        isDead = false;
+        currentHealth = reviveHealth > 0 ? reviveHealth : maxHealth;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
     }
-
-    #endregion
     
     #region Debug
-    [System.Diagnostics.Conditional("UNITY_EDITOR")]
-    private void OnValidate()
+    void OnValidate()
     {
-        // Đảm bảo giá trị hợp lệ trong Editor
         maxHealth = Mathf.Max(maxHealth, 1f);
-        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
-        regenRate = Mathf.Max(regenRate, 0f);
-        regenDelay = Mathf.Max(regenDelay, 0f);
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
     }
+
+    // Vẽ thanh máu debug trong Scene view khi chọn object
+#if UNITY_EDITOR
+    void OnDrawGizmosSelected()
+    {
+        // Vị trí vẽ phía trên object
+        Vector3 pos = transform.position + Vector3.up * 2f;
+        float width = 2f;
+        float height = 0.2f;
+        float percent = HealthPercentage;
+
+        // Khung nền (màu xám)
+        Gizmos.color = Color.gray;
+        Gizmos.DrawCube(pos, new Vector3(width, height, 0.01f));
+
+        // Thanh máu (màu xanh lá)
+        Gizmos.color = Color.green;
+        Gizmos.DrawCube(pos - new Vector3((1 - percent) * width / 2f, 0, 0), new Vector3(width * percent, height, 0.02f));
+
+        // Viền (màu đen)
+        Gizmos.color = Color.black;
+        Gizmos.DrawWireCube(pos, new Vector3(width, height, 0.03f));
+    }
+#endif
     #endregion
 }

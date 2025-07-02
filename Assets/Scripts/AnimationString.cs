@@ -9,4 +9,5 @@
     internal static string isOnCeiling = "isOnCeiling";
     internal static string attackTrigger = "isAttack01";
     internal static string canMove = "canMove";
+    internal static string hasPlayer = "hasPlayer";
 }
