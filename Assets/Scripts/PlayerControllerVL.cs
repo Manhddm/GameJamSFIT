@@ -19,6 +19,8 @@ public class PLayerControllerVl : MonoBehaviour
    private bool _isJumping = false;
    public float highJump = 100f;
    private TouchGround _touchGround;
+   public Attack attack; 
+   
    #region Events
 
    public bool IsMoving
@@ -66,6 +68,7 @@ public class PLayerControllerVl : MonoBehaviour
       _animator = GetComponent<Animator>();
       _touchGround = GetComponent<TouchGround>();
       IsRunning = false;
+      
    }
    void FixedUpdate()
    {
@@ -117,9 +120,17 @@ public class PLayerControllerVl : MonoBehaviour
       if (context.started && _touchGround.IsGrounded)
       {
          _animator.SetTrigger(AnimationString.attackTrigger);
-        
+         
       }
   
+   }
+   private void OnAttackStart()
+   {
+      attack.EnableAttack();
+   }
+   private void OnAttackEnd()
+   {
+      attack.DisableAttack();
    }
    #endregion
 

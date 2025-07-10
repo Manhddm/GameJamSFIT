@@ -15,7 +15,7 @@ public class HealthSystem : MonoBehaviour
     public UnityEvent onHeal;
     
     private bool isDead = false;
-    
+    private bool _invincible = false;
     #region Properties
     public float CurrentHealth => currentHealth;
     public float MaxHealth => maxHealth;

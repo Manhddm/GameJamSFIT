@@ -14,191 +14,160 @@ public enum BossState
     Attack1,
     Attack2,
     WalkAttack,
+    ChasePlayer,
     Hurt,
     Dead
 }
-[RequireComponent(typeof(MovementSystem))]
-[RequireComponent(typeof(TouchGround))]
+[RequireComponent(typeof(HealthSystem))]
 public class BossController : MonoBehaviour
 {
+    private BossState _currentState = BossState.Walk;
+    private Rigidbody2D _rigidbody;
+    private Animator _animator;
+    private HealthSystem _healthSystem;
+    private MovementSystem _movementSystem;
+    private void Awake()
+    {
+        _rigidbody = GetComponent<Rigidbody2D>();
+        _animator = GetComponent<Animator>();
+        _healthSystem = GetComponent<HealthSystem>();
+        _movementSystem = GetComponent<MovementSystem>();
+        InitWaypoints();
+    }
     
-    private BossState state;
-    public DetectionZone attackZone;
-    private MovementSystem movementSystem;
-    private Animator animator;
-    private Rigidbody2D rb;
-    private List<Transform> waypoints;
-    private float waypointDistance = 0.1f;
-    private int currentWaypointIndex = 0;
-    public float waitTimeAtWaypoint = 1f;
-    private bool isFacingRight = true;
-    private TouchGround touchGround;
-    [SerializeField] private bool isWaitingAtWaypoint = false;
-    [SerializeField] private bool invincible = false;
-    [SerializeField] private bool findedPlayer = false;
-    private bool canMove = true;
-    private bool isMoving = false;
-    private bool _hasPlayer = false;
-
-    #region Propertie
-
-    public bool HasPlayer
+    void Update()
     {
-        get => _hasPlayer;
-        set
-        {
-            _hasPlayer = value;
-            animator.SetBool(AnimationString.hasPlayer, value);
-        }
+        FlipCharacter();
+        Movement();
+        PlayAnimation();
+        
     }
-    public bool CanMove
+    
+
+    #region Animaiton
+    public bool isFacingRight = true;
+    private void UpdateAnimation(BossState state)
     {
-        get
-        {
-            return true;//animator.GetBool(AnimationString.canMove);
-        }
+        _currentState = state;
+        
     }
+
+    private void PlayAnimation()
+    {
+        _animator.Play(_currentState.ToString());
+    }
+
+    private void FlipCharacter()
+    {
+        if ((_movementSystem.IsFacingRight() && !isFacingRight) || (_movementSystem.IsFacingLeft() && isFacingRight))
+        {
+            isFacingRight = !isFacingRight;
+            transform.Rotate(0f,180f,0f);
+        }
+        
+    }
+
+    #endregion
+    #region Attack
+
+    
+    #endregion
+
+    #region Events
+
+    public bool IsDie()
+    {
+        return _healthSystem.IsDead;
+    }
+
+    public bool IsHurt()
+    {
+        return true;
+    }
+    //Die
+    //Hurt
+    #endregion
+
+    #region Movement
+    private bool _autoMoving = true;
+
+    private List<Transform> _waypoints = new List<Transform>();
+    private int _currentWaypoint = 0;
+    private float waypointDistance = 0.2f;
+    public float holdTime = 2f;
+    [SerializeField]private bool _isMoving = true;
 
     public bool IsMoving
     {
-        get
-        {
-            return isMoving;
-        }
+        get { return _isMoving; }
         set
         {
-            isMoving = value;
-            animator.SetBool(AnimationString.isMoving, value);
-        }
-    }
-    #endregion
-    
-    #region Movement
-    private void Move()
-    {
-        if (!touchGround.IsGrounded)
-        {
-            movementSystem.Stop();
-            return;
-        }
-        if (!findedPlayer && CanMove && !isWaitingAtWaypoint)
-        {
-            state = BossState.Walk;
-            
-            IsMoving = true;
-            if (!GameObject.Find($"{gameObject.name}_Waypoints"))
+            _isMoving = value;
+            if (_isMoving)
             {
-                GameObject OJ_waypoints = new GameObject($"{gameObject.name}_Waypoints");
-                GameObject waypoint1 = new GameObject($"{gameObject.name}_Waypoint1");
-                waypoint1.transform.SetParent(OJ_waypoints.transform);
-                waypoint1.transform.position = new Vector3(transform.position.x + 5, transform.position.y, 0);
-                GameObject waypoint2 = new GameObject($"{gameObject.name}_Waypoint2");
-                waypoint2.transform.SetParent(OJ_waypoints.transform);
-                waypoint2.transform.position = new Vector3(transform.position.x -5, transform.position.y, 0);
-                GameObject waypoint3 = new GameObject($"{gameObject.name}_Waypoint3");
-                waypoint3.transform.SetParent(OJ_waypoints.transform);
-                waypoint3.transform.position = new Vector3(transform.position.x, transform.position.y, 0);
-                waypoints = new List<Transform> { waypoint1.transform, waypoint2.transform, waypoint3.transform };
+                UpdateAnimation(BossState.Walk);
             }
-            else{
-                Transform targetWaypoint = waypoints[currentWaypointIndex];
-                float distance = Vector2.Distance(transform.position, targetWaypoint.position);
-                if (distance > waypointDistance)
-                {
-                    movementSystem.MoveTowards(targetWaypoint.position);
-                }
-                else
-                {
-                    StartCoroutine(WaitAtWaypoint(waitTimeAtWaypoint));
-                    isWaitingAtWaypoint = true;
-                    //currentWaypointIndex = (currentWaypointIndex + 1) % waypoints.Count;
-                }
+            else
+            {
+                _movementSystem.Stop();
+                UpdateAnimation(BossState.Idle);
             }
         }
     }
+    private void AutoMoving()
+    {
+        Transform target = _waypoints[_currentWaypoint];
+        float distance = Vector2.Distance(transform.position, target.position);
+        if (distance > waypointDistance)
+        {
+            _movementSystem.MoveTowards(target.position);
+        }
+        else
+        {
+            StartCoroutine(WaitAtWaypoint(holdTime));
+            
+        }
+        
+    }
+
+    private void FlPlayer()
+    {
+        
+    }
+
+    private void Movement()
+    {
+        if (!IsMoving) return;
+        if (_autoMoving)
+        {
+            AutoMoving();
+        }
+        else
+        {
+            FlPlayer();
+        }
+    }
+
+    private void InitWaypoints()
+    {
+        GameObject waypointObject = new GameObject($"{gameObject.name}_waypoints");
+        GameObject waypoint01 = new GameObject("Waypoint01");
+        GameObject waypoint02 = new GameObject("Waypoint02");
+        waypoint01.transform.SetParent(waypointObject.transform);
+        waypoint02.transform.SetParent(waypointObject.transform);
+        waypoint01.transform.position = new Vector3(transform.position.x + 5, transform.position.y, 0);
+        waypoint02.transform.position = new Vector3(transform.position.x - 5, transform.position.y, 0);
+        _waypoints.Add(waypoint01.transform);
+        _waypoints.Add(waypoint02.transform);
+    }
+
     private IEnumerator WaitAtWaypoint(float waitTime)
     {
-        isWaitingAtWaypoint = true;
-        state = BossState.Idle;
         IsMoving = false;
-        movementSystem.Stop();
         yield return new WaitForSeconds(waitTime);
-        isWaitingAtWaypoint = false;
-        int newWaypointIndex = Random.Range(0,waypoints.Count);
-        while (newWaypointIndex == currentWaypointIndex)
-        {
-            newWaypointIndex = Random.Range(0,waypoints.Count);
-        }
-        currentWaypointIndex = newWaypointIndex;
-    }
-    #endregion
-
-    #region Attack
-
-    private void Attack1()
-    {
-        if (HasPlayer)
-        {
-            movementSystem.Stop();
-        }
-    }
-    #endregion
-
-    #region Hurt
-    #endregion
-
-    #region Dead
-    #endregion
-
-    #region Animation
-
-    private void UpdateAnimation()
-    {
-        
-        if (isFacingRight && movementSystem.IsFacingLeft())
-        {
-            Flip();
-        }
-        else if (!isFacingRight && movementSystem.IsFacingRight())
-        {
-            Flip();
-        }
-    }
-    private void Flip()
-    {
-        isFacingRight = !isFacingRight;
-        transform.Rotate(0f, 180f, 0f);
+        IsMoving = true;
+        _currentWaypoint = (_currentWaypoint + 1) % _waypoints.Count;
         
     }
-    #endregion
-
-    #region MonoBehaviour Methods
-    private void Awake()
-    {
-        movementSystem = GetComponent<MovementSystem>();
-        animator = GetComponent<Animator>();
-        rb = GetComponent<Rigidbody2D>();
-        touchGround = GetComponent<TouchGround>();
-        
-    }
-    private void Start()
-    {
-        state = BossState.Idle;
-    }
-    private void Update()
-    {
-        UpdateAnimation();
-        HasPlayer = attackZone.detectedColliders.Count > 0;
-    }
-
-    private void FixedUpdate()
-    {
-        Move();
-        Attack1();
-    }
-
-    #endregion
-
-    #region Debug
     #endregion
 }

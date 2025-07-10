@@ -10,4 +10,9 @@
     internal static string attackTrigger = "isAttack01";
     internal static string canMove = "canMove";
     internal static string hasPlayer = "hasPlayer";
+    internal static string attack1Trigger = "Attack1";
+    internal static string attack2Trigger = "Attack2";
+    internal static string canAttack = "canAttack";
+    internal static string isChasing = "isChasing";
+    internal static string isRageMode = "isRageMode";
 }
