@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 public enum BossState
 {
@@ -26,12 +25,18 @@ public class BossController : MonoBehaviour
     private Animator _animator;
     private HealthSystem _healthSystem;
     private MovementSystem _movementSystem;
+    public DetectionZone _detectionZone;
     private void Awake()
     {
         _rigidbody = GetComponent<Rigidbody2D>();
         _animator = GetComponent<Animator>();
         _healthSystem = GetComponent<HealthSystem>();
         _movementSystem = GetComponent<MovementSystem>();
+        if (_detectionZone != null)
+        {
+            _detectionZone.OnPlayerEnter += OnPlayerDetected;
+            _detectionZone.OnPlayerExit += OnPlayerLost;
+        }
         InitWaypoints();
     }
     
@@ -70,10 +75,30 @@ public class BossController : MonoBehaviour
     #endregion
     #region Attack
 
-    
+    private void Attack()
+    {
+        if (_healthSystem.CurrentHealth / _healthSystem.MaxHealth < 0.4f)
+        {
+            UpdateAnimation(BossState.Attack2);
+        }
+        else UpdateAnimation(BossState.Attack1);
+    }
     #endregion
 
     #region Events
+
+    private void OnPlayerDetected( Transform player )
+    {
+        _player = player;
+        _autoMoving = false;
+        
+    }
+
+    private void OnPlayerLost(Transform player)
+    {
+        _player = null;
+        _autoMoving = true;
+    }
 
     public bool IsDie()
     {
@@ -96,7 +121,7 @@ public class BossController : MonoBehaviour
     private float waypointDistance = 0.2f;
     public float holdTime = 2f;
     [SerializeField]private bool _isMoving = true;
-
+    private Transform _player;
     public bool IsMoving
     {
         get { return _isMoving; }
@@ -132,7 +157,10 @@ public class BossController : MonoBehaviour
 
     private void FlPlayer()
     {
-        
+        if (_player != null)
+        {
+            _movementSystem.MoveTowards(_player.position);  
+        }
     }
 
     private void Movement()
