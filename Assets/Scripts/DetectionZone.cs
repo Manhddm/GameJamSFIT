@@ -23,7 +23,6 @@ public class DetectionZone : MonoBehaviour
         detectedColliders.Add(other);
         if (other.CompareTag(playerTag))
         {
-            Debug.Log("Player enter");
             OnPlayerEnter?.Invoke(other.transform);
         }
     }
@@ -33,17 +32,19 @@ public class DetectionZone : MonoBehaviour
         detectedColliders.Remove(other);
         if (other.CompareTag(playerTag))
         {
-            Debug.Log("Player left detection zone!");
+            
             OnPlayerExit?.Invoke(other.transform);
         }
     }
 
     public bool HasPlayer()
     {
-        foreach (Collider2D col in detectedColliders)
+        
+        foreach (Collider2D coll in detectedColliders)
         {
-            if (col != null &&col.gameObject.layer == playerLayer) return true;
+            if (coll != null && coll.CompareTag(playerTag)) return true;
         }
+        Debug.Log("Didn't find player");
         return false;
     }
     

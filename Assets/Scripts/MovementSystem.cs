@@ -138,10 +138,9 @@ public class MovementSystem : MonoBehaviour
     /// <param name="target">Target transform to move towards</param>
     public void MoveTowards(Transform target)
     {
-        if (target != null)
-        {
-            MoveTowards(target.position);
-        }
+
+        Vector2 direction = (target.transform.position - transform.position).normalized;
+        Move(direction);
     }
     
     /// <summary>

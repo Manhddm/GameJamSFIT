@@ -21,6 +21,7 @@ public enum BossState
 public class BossController : MonoBehaviour
 {
     private BossState _currentState = BossState.Walk;
+    private BossState _previousState = BossState.Idle;
     private Rigidbody2D _rigidbody;
     private Animator _animator;
     private HealthSystem _healthSystem;
@@ -28,7 +29,6 @@ public class BossController : MonoBehaviour
     public DetectionZone _detectionZone;
     private void Awake()
     {
-        _rigidbody = GetComponent<Rigidbody2D>();
         _animator = GetComponent<Animator>();
         _healthSystem = GetComponent<HealthSystem>();
         _movementSystem = GetComponent<MovementSystem>();
@@ -42,13 +42,119 @@ public class BossController : MonoBehaviour
     
     void Update()
     {
+        HandleState();
         FlipCharacter();
-        Movement();
         PlayAnimation();
         
     }
-    
 
+    private void FixedUpdate()
+    {
+        
+    }
+
+    #region State Machine
+
+    private void HandleState()
+    {
+        switch (_currentState)
+        {
+            case BossState.Idle:
+            {
+                HandleStateIdle();
+                break;
+            }
+            case BossState.Walk:
+            {
+                HandleStateWalk();
+                break;
+            }
+            case BossState.ChasePlayer:
+                HandleChaseState();
+                break;
+            case BossState.Attack1:
+                HandleAttack();
+                break;
+        }
+    }
+
+    private void HandleChaseState()
+    {
+        if (!_detectionZone.HasPlayer() || _player == null)
+        {
+            ChangeState(BossState.Walk);
+            return;
+        }
+
+     
+        if (_canAttack && CanAttackPlayer())
+        {
+            StartAttack();
+            return;
+        }
+        if (_isMoving)
+        {
+            FlPlayer();
+        }
+    }
+
+    private void HandleStateIdle()
+    {
+        
+    }
+
+    private void HandleStateWalk()
+    {
+        if (_detectionZone.HasPlayer() && _player != null)
+        {
+            ChangeState(BossState.ChasePlayer);
+            return;
+        }
+
+        if (_isMoving)
+        {
+            Movement();
+        }
+        
+    }
+
+    private void ChangeState(BossState newState)
+    {
+        if (_currentState == newState) return;
+        _previousState = _currentState;
+        _currentState = newState;
+        OnStateEnter(newState);
+        
+    }
+
+    private void OnStateEnter(BossState state)
+    {
+        switch (state)
+        {
+            case BossState.Idle:
+                _isMoving = false;
+                break;
+            case BossState.Walk:
+                _isMoving = true;
+                _autoMoving = true;
+                break;
+            case BossState.ChasePlayer:
+                _isMoving = true;
+                _autoMoving = false;
+                break;
+            case BossState.Hurt:
+                break;
+            case BossState.Dead:
+                _isMoving = false;
+                break;
+            case BossState.Attack1:
+                _isMoving = false;
+                _isAttacking = true;
+                _lastAttackTime = Time.time;
+                break;
+        }
+    }
+    #endregion
     #region Animaiton
     public bool isFacingRight = true;
     private void UpdateAnimation(BossState state)
@@ -60,28 +166,62 @@ public class BossController : MonoBehaviour
     private void PlayAnimation()
     {
         _animator.Play(_currentState.ToString());
+        if (_currentState == BossState.Idle) _movementSystem.Stop();
     }
-
+    private bool _lastFacingDirection = true;
     private void FlipCharacter()
     {
-        if ((_movementSystem.IsFacingRight() && !isFacingRight) || (_movementSystem.IsFacingLeft() && isFacingRight))
+        
+        if (!_movementSystem.IsMoving || _isAttacking) return;
+        
+        bool shouldFaceRight = _movementSystem.IsFacingRight();
+        
+
+        if (shouldFaceRight != _lastFacingDirection)
         {
-            isFacingRight = !isFacingRight;
-            transform.Rotate(0f,180f,0f);
+            _lastFacingDirection = shouldFaceRight;
+            isFacingRight = shouldFaceRight;
+            transform.Rotate(0f, 180f, 0f);
         }
         
     }
 
     #endregion
     #region Attack
+    private bool _isAttacking = false;
+    private float _lastAttackTime;
+    private bool _canAttack;
 
-    private void Attack()
+    public bool CanAttackPlayer()
     {
-        if (_healthSystem.CurrentHealth / _healthSystem.MaxHealth < 0.4f)
+        return !_isAttacking;
+    }
+
+    private void HandleAttack()
+    {
+        if (_isAttacking) return;
+        if (_detectionZone.HasPlayer() && _player != null)
         {
-            UpdateAnimation(BossState.Attack2);
+            //float distanceToPlayer = Vector2.Distance(transform.position, _player.transform.position);
+            StartAttack();
         }
-        else UpdateAnimation(BossState.Attack1);
+    }
+
+    private void StartAttack()
+    {
+        if (_isAttacking) return;
+        _isAttacking = true;
+        _isMoving = false;
+        BossState attackType = ChooseAttackState();
+        UpdateAnimation(attackType);
+        
+    }
+
+    private BossState ChooseAttackState()
+    {
+        float healthPercentage = _healthSystem.CurrentHealth / _healthSystem.MaxHealth;
+        if (healthPercentage < 0.5f) return BossState.Attack2;
+        return BossState.Attack1;
     }
     #endregion
 
@@ -132,15 +272,11 @@ public class BossController : MonoBehaviour
             {
                 UpdateAnimation(BossState.Walk);
             }
-            else
-            {
-                _movementSystem.Stop();
-                UpdateAnimation(BossState.Idle);
-            }
         }
     }
     private void AutoMoving()
     {
+        if (_detectionZone.HasPlayer()) return;
         Transform target = _waypoints[_currentWaypoint];
         float distance = Vector2.Distance(transform.position, target.position);
         if (distance > waypointDistance)
@@ -159,7 +295,7 @@ public class BossController : MonoBehaviour
     {
         if (_player != null)
         {
-            _movementSystem.MoveTowards(_player.position);  
+            _movementSystem.MoveTowards(_player);  
         }
     }
 
@@ -192,6 +328,7 @@ public class BossController : MonoBehaviour
     private IEnumerator WaitAtWaypoint(float waitTime)
     {
         IsMoving = false;
+        UpdateAnimation(BossState.Idle);
         yield return new WaitForSeconds(waitTime);
         IsMoving = true;
         _currentWaypoint = (_currentWaypoint + 1) % _waypoints.Count;

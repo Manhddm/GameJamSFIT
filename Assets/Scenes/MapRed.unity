@@ -8823,6 +8823,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f034043b67303e4b80e01ff35aed8d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _detectionZone: {fileID: 1197153720}
   isFacingRight: 1
   holdTime: 2
   _isMoving: 1
@@ -8958,7 +8959,7 @@ CapsuleCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 512
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
