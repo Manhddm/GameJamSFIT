@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1319529362267730986}
   - component: {fileID: 8009812903876838342}
-  - component: {fileID: 4907495027289777078}
   m_Layer: 0
   m_Name: Attack1
   m_TagString: Untagged
@@ -92,23 +91,6 @@ PolygonCollider2D:
       - {x: 0.22756419, y: -0.042600423}
       - {x: 0.24254823, y: 0.0501526}
   m_UseDelaunayMesh: 0
---- !u!114 &4907495027289777078
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 474407474193954997}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6023a7f680a68734d9c59d3084e57e5f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  attackDamage: 10
-  knockback: {x: 5, y: 2}
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 0
 --- !u!1 &639053024673849337
 GameObject:
   m_ObjectHideFlags: 0
@@ -120,12 +102,9 @@ GameObject:
   - component: {fileID: 9213775799316322347}
   - component: {fileID: 3173279966802636350}
   - component: {fileID: 4192065101543896529}
-  - component: {fileID: 742431184352901787}
   - component: {fileID: 3905928552995778101}
   - component: {fileID: 4248525009689383573}
-  - component: {fileID: 6464028024716261302}
   - component: {fileID: 1720097309817111395}
-  - component: {fileID: 8427190765881269470}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -228,23 +207,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
---- !u!114 &742431184352901787
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 639053024673849337}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b244cec3ad5f483458b3f3a3165ca8c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  walkSpeed: 100
-  runSpeed: 300
-  currentSpeed: 0
-  highJump: 50
-  attack: {fileID: 0}
 --- !u!114 &3905928552995778101
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -272,7 +234,7 @@ MonoBehaviour:
   m_ActionEvents:
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 742431184352901787}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: PLayerController_VL, Assembly-CSharp
         m_MethodName: OnMove
         m_Mode: 0
@@ -292,7 +254,7 @@ MonoBehaviour:
     m_ActionName: Player/Look[/Mouse/delta]
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 742431184352901787}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: PLayerControllerVl, Assembly-CSharp
         m_MethodName: OnAttack
         m_Mode: 0
@@ -348,7 +310,7 @@ MonoBehaviour:
     m_ActionName: UI/TrackedDeviceOrientation
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 742431184352901787}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: PLayerControllerVl, Assembly-CSharp
         m_MethodName: OnRun
         m_Mode: 0
@@ -364,7 +326,7 @@ MonoBehaviour:
     m_ActionName: Player/Run[/Keyboard/leftShift]
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 742431184352901787}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: PLayerControllerVl, Assembly-CSharp
         m_MethodName: OnJump
         m_Mode: 0
@@ -404,33 +366,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &6464028024716261302
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 639053024673849337}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 29fbc0e7e3ee5b04e810a4e5930e0b98, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  castFilter:
-    useTriggers: 0
-    useLayerMask: 0
-    useDepth: 0
-    useOutsideDepth: 0
-    useNormalAngle: 0
-    useOutsideNormalAngle: 0
-    layerMask:
-      serializedVersion: 2
-      m_Bits: 0
-    minDepth: 0
-    maxDepth: 0
-    minNormalAngle: 0
-    maxNormalAngle: 0
-  isOnWall: 0
 --- !u!70 &1720097309817111395
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -466,28 +401,6 @@ CapsuleCollider2D:
   m_Offset: {x: 0.0011614442, y: -0.039462388}
   m_Size: {x: 0.11693964, y: 0.27306008}
   m_Direction: 0
---- !u!114 &8427190765881269470
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 639053024673849337}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 06a1f0f788eafa54693e3ccb81946571, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxHealth: 100
-  currentHealth: 0
-  isInvincible: 0
-  invincibleTime: 0.5
-  OnHit:
-    m_PersistentCalls:
-      m_Calls: []
-  OnDeath:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1 &2258060875020431787
 GameObject:
   m_ObjectHideFlags: 0
