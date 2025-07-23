@@ -253,10 +253,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f8c8079b7ae47145a95ed06f2fbd7f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cam: {fileID: 519420031}
-  followTarget: {fileID: 2083119801}
-  parallaxEffectMultiplier: 0.3
-  useManualParallaxFactor: 1
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -579,10 +575,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f8c8079b7ae47145a95ed06f2fbd7f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cam: {fileID: 519420031}
-  followTarget: {fileID: 2083119801}
-  parallaxEffectMultiplier: 0.3
-  useManualParallaxFactor: 1
 --- !u!1 &721593541
 GameObject:
   m_ObjectHideFlags: 0
@@ -680,10 +672,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f8c8079b7ae47145a95ed06f2fbd7f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cam: {fileID: 519420031}
-  followTarget: {fileID: 2083119801}
-  parallaxEffectMultiplier: 0.32
-  useManualParallaxFactor: 1
 --- !u!1 &802820643
 GameObject:
   m_ObjectHideFlags: 0
@@ -8524,8 +8512,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0113d13759f7da4ca6b5e4df655d342, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  detectedColliders: []
-  col: {fileID: 1197153721}
 --- !u!61 &1197153721
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -8667,11 +8653,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6023a7f680a68734d9c59d3084e57e5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attackDamage: 10
-  knockback: {x: 5, y: 2}
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 0
 --- !u!1 &1331165556
 GameObject:
   m_ObjectHideFlags: 3
@@ -8760,17 +8741,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac0b09e7857660247b1477e93731de29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &1413054842 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4907495027289777078, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
-  m_PrefabInstance: {fileID: 3570172957483439177}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6023a7f680a68734d9c59d3084e57e5f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1831910558
 GameObject:
   m_ObjectHideFlags: 0
@@ -8823,10 +8793,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f034043b67303e4b80e01ff35aed8d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _detectionZone: {fileID: 1197153720}
-  isFacingRight: 1
-  holdTime: 2
-  _isMoving: 1
 --- !u!114 &1831910561
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8839,11 +8805,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 855f9a31ce7364145b2e6661be15ab04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
-  acceleration: 10
-  deceleration: 10
-  useAcceleration: 0
-  rb: {fileID: 1831910562}
 --- !u!50 &1831910562
 Rigidbody2D:
   serializedVersion: 4
@@ -8991,17 +8952,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e10f0d6ef73095d4facf84a697b960a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100
-  currentHealth: 0
-  onDie:
-    m_PersistentCalls:
-      m_Calls: []
-  onTakeDamage:
-    m_PersistentCalls:
-      m_Calls: []
-  onHeal:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!4 &2083119801 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9213775799316322347, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
@@ -9034,7 +8984,7 @@ PrefabInstance:
     - target: {fileID: 742431184352901787, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
       propertyPath: attack
       value: 
-      objectReference: {fileID: 1413054842}
+      objectReference: {fileID: 0}
     - target: {fileID: 742431184352901787, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
       propertyPath: highJump
       value: 16
@@ -9054,6 +9004,10 @@ PrefabInstance:
     - target: {fileID: 742431184352901787, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
       propertyPath: playerAttack
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 1948643495499571943, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
+      propertyPath: speed
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 6464028024716261302, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
       propertyPath: castFilter.useLayerMask
