@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
+    // Enum định nghĩa các trạng thái của nhân vật
     enum PlayerState
     {
         PlayerIdle,
@@ -13,14 +14,24 @@ public class PlayerController : MonoBehaviour
         PlayerJump,
         PlayerFall,
         PlayerRising,
-        PlayerAttack1
+        PlayerAttack01 // Gộp chung trạng thái tấn công
+    }
+
+    // Enum định nghĩa các kiểu tấn công có thể có
+    enum AttackType
+    {
+        Sword,
+        Bow
     }
 
     private PlayerState _currentState;
     private PlayerState _previousState;
+    private AttackType _currentAttackType = AttackType.Sword; // Mặc định là dùng kiếm
+
     private Animator _animator;
     private Rigidbody2D _rigidbody;
     private TouchGround _touchGround;
+    private AttackSystem _attackSystem;
 
     [SerializeField] private float _currentSpeed;
     public float speed = 5f;
@@ -30,14 +41,19 @@ public class PlayerController : MonoBehaviour
     private bool _isFacingRight = true;
     private bool _isRunning = false;
     private bool _isMoving = false;
+    private bool _isAttacking = false;
 
     [Header("Jump Settings")]
     [SerializeField] private float jumpForce = 10f;
     [SerializeField] private float fallMultiplier = 2.5f;
     [SerializeField] private float lowJumpMultiplier = 2f;
-    [SerializeField] private float coyoteTime = 0.2f; // Thời gian đệm cho phép nhảy sau khi nhấn nút
-    [SerializeField] private float jumpBufferTime = 0.2f; // Thời gian đệm cho phép nhảy sau khi rời mặt đất
+    [SerializeField] private float coyoteTime = 0.2f;
+    [SerializeField] private float jumpBufferTime = 0.2f;
     [SerializeField] private int maxAirJumps = 1;
+
+    [Header("Attack Settings")]
+    [SerializeField] private GameObject meleeHitboxObject;
+    [SerializeField] private float meleeAttackDuration = 0.5f;
 
     //Jump variables
     private int _currentAirJumps;
@@ -45,7 +61,7 @@ public class PlayerController : MonoBehaviour
     private bool _wasGround;
     private float _coyoteTimeCounter;
     private float _jumpBufferCounter;
-    private bool _isJumpHeld;// Biến để kiểm tra xem nút nhảy có đang được giữ hay không
+    private bool _isJumpHeld;
 
     #region Monobehaviour
 
@@ -55,12 +71,13 @@ public class PlayerController : MonoBehaviour
         _animator = GetComponent<Animator>();
         _rigidbody = GetComponent<Rigidbody2D>();
         _touchGround = GetComponent<TouchGround>();
+        _attackSystem = GetComponent<AttackSystem>();
         _currentSpeed = speed;
-    }
 
-    void Start()
-    {
-
+        if (meleeHitboxObject != null)
+        {
+            meleeHitboxObject.SetActive(false);
+        }
     }
 
     void Update()
@@ -68,8 +85,6 @@ public class PlayerController : MonoBehaviour
         UpdateJumpTimer();
         UpdatePlayerState();
         UpdateAnimation();
-        Debug.Log($"Wall left: {_touchGround.IsOnLeftWall}, Wall right: {_touchGround.IsOnRightWall}");
-
     }
 
     void FixedUpdate()
@@ -77,17 +92,22 @@ public class PlayerController : MonoBehaviour
         Move();
         HandleJump();
         ApplyBetterJumpPhysics();
-
     }
 
     #endregion
 
     #region Movement Logic
 
-    
     private void Move()
     {
+        if (_isAttacking)
+        {
+            _rigidbody.velocity = new Vector2(0, _rigidbody.velocity.y);
+            return;
+        }
+
         float targetVelocityX = _moveInput.x * _currentSpeed;
+
         if ((_moveInput.x > 0f && _touchGround.IsOnRightWall) || (_moveInput.x < 0f && _touchGround.IsOnLeftWall))
         {
             targetVelocityX = 0;
@@ -98,9 +118,10 @@ public class PlayerController : MonoBehaviour
 
     private void UpdatePlayerState()
     {
+        if (_isAttacking) return;
+
         _previousState = _currentState;
 
-        // Kiểm tra xem có đang di chuyển không
         _isMoving = Mathf.Abs(_moveInput.x) > 0.1f;
         if (!_touchGround.IsGrounded)
         {
@@ -112,20 +133,17 @@ public class PlayerController : MonoBehaviour
             {
                 SetState(PlayerState.PlayerFall);
             }
-            else SetState(PlayerState.PlayerRising);
         }
         else
         {
-            
-            if (!_isMoving)
+            bool isMovingIntoWall = (_moveInput.x > 0 && _touchGround.IsOnRightWall) || (_moveInput.x < 0 && _touchGround.IsOnLeftWall);
+
+            if (!_isMoving || isMovingIntoWall)
             {
                 SetState(PlayerState.PlayerIdle);
             }
             else
             {
-
-
-
                 if (_isRunning)
                 {
                     SetState(PlayerState.PlayerRun);
@@ -152,6 +170,7 @@ public class PlayerController : MonoBehaviour
         switch (_currentState)
         {
             case PlayerState.PlayerIdle:
+            case PlayerState.PlayerAttack01:
                 _currentSpeed = 0f;
                 break;
             case PlayerState.PlayerWalk:
@@ -163,8 +182,6 @@ public class PlayerController : MonoBehaviour
             case PlayerState.PlayerJump:
             case PlayerState.PlayerFall:
             case PlayerState.PlayerRising:
-                // Giữ nguyên tốc độ di chuyển trong air
-                _currentSpeed = _isRunning ? speed * runMultiplier : speed;
                 break;
             default:
                 _currentSpeed = speed;
@@ -174,163 +191,124 @@ public class PlayerController : MonoBehaviour
 
     private void UpdateAnimation()
     {
-        // Chỉ update animation khi state thay đổi để tránh việc gọi Play() liên tục
         if (_currentState != _previousState)
         {
-            _animator.Play(_currentState.ToString());
+            string animationToPlay = _currentState.ToString();
+
+            // if (_currentState == PlayerState.PlayerAttack1)
+            // {
+            //     // Tạm thời dùng Idle để không lỗi.
+            //     // TODO: Khi có animation tấn công, bạn có thể đổi tên này thành "PlayerAttack"
+            //     // hoặc dùng một logic phức tạp hơn để chọn animation dựa trên _currentAttackType.
+            //     animationToPlay = "PlayerIdle";
+            //     Debug.LogWarning($"Chưa có animation cho state 'PlayerAttack'. Sử dụng 'PlayerIdle' thay thế.");
+            // }
+
+            _animator.Play(animationToPlay);
         }
     }
 
     #endregion
 
     #region Jump Logic
+    // ... (Phần code Jump không thay đổi)
+    private void UpdateJumpTimer() { if (_touchGround.IsGrounded) { _coyoteTimeCounter = coyoteTime; } else { _coyoteTimeCounter -= Time.deltaTime; } if (_jumpBufferCounter > 0) { _jumpBufferCounter -= Time.deltaTime; } }
+    private void HandleJump() { if (_touchGround.IsGrounded && !_wasGround) { _currentAirJumps = maxAirJumps; } _wasGround = _touchGround.IsGrounded; if (_jumpBufferCounter > 0 && CanJump()) { PerformJump(); _jumpBufferCounter = 0; } }
+    private bool CanJump() { return (_coyoteTimeCounter > 0) || (_currentAirJumps > 0); }
+    private void PerformJump() { _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, 0f); _rigidbody.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse); if (_coyoteTimeCounter <= 0) { _currentAirJumps--; } _coyoteTimeCounter = 0; }
+    private void ApplyBetterJumpPhysics() { if (_rigidbody.velocity.y < 0) { _rigidbody.velocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1) * Time.fixedDeltaTime; } else if (_rigidbody.velocity.y > 0 && !_isJumpHeld) { _rigidbody.velocity += Vector2.up * Physics2D.gravity.y * (lowJumpMultiplier - 1) * Time.fixedDeltaTime; } }
+    #endregion
 
-    private void UpdateJumpTimer()
+    #region Attack Logic
+    
+    // Hàm này sẽ được gọi bởi nút tấn công chính (ví dụ: chuột trái)
+    public void OnAttack(InputAction.CallbackContext context)
     {
-        //Coyote - cho phep nhay trong thoi gian ngan sau khi roi ground
-        if (_touchGround.IsGrounded)
+        if (context.started && CanAttack())
         {
-            _coyoteTimeCounter = coyoteTime;
-        }
-        else
-        {
-            _coyoteTimeCounter -= Time.deltaTime;
-        }
-        //Jump buffer - ghi nho input nhay trong thoi gian ngan
-        if (_jumpBufferCounter > 0)
-        {
-            _jumpBufferCounter -= Time.deltaTime;
+            switch (_currentAttackType)
+            {
+                case AttackType.Sword:
+                    StartCoroutine(MeleeAttackRoutine());
+                    break;
+                case AttackType.Bow:
+                    // Tạm thời chưa có logic. Khi cần, bạn sẽ gọi coroutine bắn cung ở đây.
+                    Debug.Log("Chưa triển khai tấn công bằng cung!");
+                    break;
+                default:
+                    StartCoroutine(MeleeAttackRoutine());
+                    break;
+            }
         }
     }
 
-    private void HandleJump()
+    // Hàm này gọi khi nhấn phím 1
+    public void OnSelectWeapon1(InputAction.CallbackContext context)
     {
-        //Reset airJump khi cham dat
-        if (_touchGround.IsGrounded && !_wasGround)
+        if (context.started && !_isAttacking)
         {
-            _currentAirJumps = maxAirJumps;
-        }
-
-        _wasGround = _touchGround.IsGrounded;
-        if (_jumpBufferCounter > 0 && CanJump())
-        {
-            PerformJump();
-            _jumpBufferCounter = 0; // Clear buffer
+            _currentAttackType = AttackType.Sword;
+            Debug.Log("Đã chọn: Kiếm");
         }
     }
 
-    private bool CanJump()
+    // Hàm này gọi khi nhấn phím 2
+    public void OnSelectWeapon2(InputAction.CallbackContext context)
     {
-        // Có thể nhảy nếu:
-        // 1. Đang trên ground hoặc trong coyote time
-        // 2. Hoặc còn air jumps
-        return (_coyoteTimeCounter > 0) || (_currentAirJumps > 0);
-    }
-    private void PerformJump()
-    {
-        // Reset vertical velocity trước khi jump
-        _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, 0f);
-
-        // Apply jump force
-        _rigidbody.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-
-        // Consume air jump nếu không còn coyote time
-        if (_coyoteTimeCounter <= 0)
+        if (context.started && !_isAttacking)
         {
-            _currentAirJumps--;
-        }
-
-        // Reset coyote time để tránh double jump không mong muốn
-        _coyoteTimeCounter = 0;
-    }
-    private void ApplyBetterJumpPhysics()
-    {
-        // Variable height jumping
-        if (_rigidbody.velocity.y < 0)
-        {
-            // Falling faster
-            _rigidbody.velocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1) * Time.fixedDeltaTime;
-        }
-        else if (_rigidbody.velocity.y > 0 && !_isJumpHeld)
-        {
-            // Short jump khi không giữ nút jump
-            _rigidbody.velocity += Vector2.up * Physics2D.gravity.y * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
+            _currentAttackType = AttackType.Bow;
+            Debug.Log("Đã chọn: Cung");
         }
     }
+
+    private bool CanAttack()
+    {
+        return !_isAttacking && _touchGround.IsGrounded;
+    }
+
+    private IEnumerator MeleeAttackRoutine()
+    {
+        _isAttacking = true;
+        SetState(PlayerState.PlayerAttack01);
+
+        if (meleeHitboxObject != null)
+        {
+            meleeHitboxObject.SetActive(true);
+        }
+
+        yield return new WaitForSeconds(0.2f); 
+
+        if (meleeHitboxObject != null)
+        {
+            meleeHitboxObject.SetActive(false);
+        }
+
+        yield return new WaitForSeconds(meleeAttackDuration - 0.2f); 
+
+        _isAttacking = false;
+    }
+
     #endregion
 
     #region Input Management
-
-    public bool IsRunning
-    {
-        get { return _isRunning; }
-        set { _isRunning = value; }
-    }
-
-    public void OnMove(InputAction.CallbackContext context)
-    {
-        _moveInput = context.ReadValue<Vector2>();
-
-        // Xử lý hướng quay mặt
-        if (_moveInput.x != 0)
-        {
-            SetFacing(_moveInput);
-        }
-    }
-
-    private void SetFacing(Vector2 moveInput)
-    {
-        bool shouldFaceRight = moveInput.x > 0;
-
-        if (shouldFaceRight != _isFacingRight)
-        {
-            _isFacingRight = shouldFaceRight;
-            transform.Rotate(0f, 180f, 0f);
-        }
-    }
-
-    public void OnRun(InputAction.CallbackContext context)
-    {
-        if (context.started)
-        {
-            _isRunning = !_isRunning;
-        }
-    }
-
-    public void OnJump(InputAction.CallbackContext context)
-    {
-        if (context.started)
-        {
-            _isJumpPressed = true;
-            _isJumpHeld = true;
-            _jumpBufferCounter = jumpBufferTime; // Set jump buffer
-        }
-        else if (context.canceled)
-        {
-            _isJumpPressed = false;
-            _isJumpHeld = false;
-        }
-
-
-    }
+    public bool IsRunning { get { return _isRunning; } set { _isRunning = value; } }
+    public void OnMove(InputAction.CallbackContext context) { _moveInput = context.ReadValue<Vector2>(); if (_moveInput.x != 0) { SetFacing(_moveInput); } }
+    private void SetFacing(Vector2 moveInput) { bool shouldFaceRight = moveInput.x > 0; if (shouldFaceRight != _isFacingRight) { _isFacingRight = shouldFaceRight; transform.Rotate(0f, 180f, 0f); } }
+    public void OnRun(InputAction.CallbackContext context) { if (context.started) { _isRunning = !_isRunning; } }
+    public void OnJump(InputAction.CallbackContext context) { if (context.started) { _isJumpPressed = true; _isJumpHeld = true; _jumpBufferCounter = jumpBufferTime; } else if (context.canceled) { _isJumpPressed = false; _isJumpHeld = false; } }
     #endregion
-    #region Debug Info
 
+    #region Debug Info
     void OnGUI()
     {
         if (Application.isEditor)
         {
-            GUILayout.Label($"Speed: {_currentSpeed:F2}");
-            GUILayout.Label($"State: {_currentState}");
+            GUILayout.Label($"Current State: {_currentState}");
+            GUILayout.Label($"Current Weapon: {_currentAttackType}");
             GUILayout.Label($"Grounded: {_touchGround.IsGrounded}");
-            GUILayout.Label($"On Wall: {_touchGround.IsOnWall}");
-            GUILayout.Label($"On Ceiling: {_touchGround.IsOnCeiling}");
-            GUILayout.Label($"Coyote Time: {_coyoteTimeCounter:F2}");
-            GUILayout.Label($"Jump Buffer: {_jumpBufferCounter:F2}");
-            GUILayout.Label($"Air Jumps: {_currentAirJumps}");
             GUILayout.Label($"Velocity Y: {_rigidbody.velocity.y:F2}");
         }
     }
-
     #endregion
 }

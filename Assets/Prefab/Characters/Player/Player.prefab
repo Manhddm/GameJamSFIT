@@ -257,9 +257,9 @@ MonoBehaviour:
     m_ActionName: Player/Look[/Mouse/delta]
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 639053024673849337}
-        m_TargetAssemblyTypeName: PLayerControllerVl, Assembly-CSharp
-        m_MethodName: 
+      - m_Target: {fileID: 1948643495499571943}
+        m_TargetAssemblyTypeName: PlayerController, Assembly-CSharp
+        m_MethodName: OnAttack
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -425,6 +425,8 @@ MonoBehaviour:
   coyoteTime: 0.2
   jumpBufferTime: 0.2
   maxAirJumps: 2
+  meleeHitboxObject: {fileID: 0}
+  meleeAttackDuration: 0.5
 --- !u!114 &3855689432015818384
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -451,8 +453,10 @@ MonoBehaviour:
     maxDepth: 0
     minNormalAngle: 0
     maxNormalAngle: 0
-  groundTag: Ground
-  isOnWall: 0
+  groundDistance: 0.1
+  wallDistance: 0.5
+  ceilingDistance: 0.5
+  showDebugRays: 1
 --- !u!114 &6809288777293090116
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -465,9 +469,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf4cb8457f0aab34c98a77dc91269c23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attackDamage: 10
-  attackRange: 1.5
-  attackCooldown: 0.5
+  meleeDamage: 20
   enemyLayers:
     serializedVersion: 2
     m_Bits: 0
