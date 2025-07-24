@@ -15,17 +15,17 @@ public class PlayerController : MonoBehaviour
         PlayerRising,
         PlayerAttack1
     }
-    
+
     private PlayerState _currentState;
     private PlayerState _previousState;
     private Animator _animator;
     private Rigidbody2D _rigidbody;
     private TouchGround _touchGround;
-    
+
     [SerializeField] private float _currentSpeed;
     public float speed = 5f;
     public float runMultiplier = 2f;
-    
+
     private Vector2 _moveInput;
     private bool _isFacingRight = true;
     private bool _isRunning = false;
@@ -37,7 +37,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float lowJumpMultiplier = 2f;
     [SerializeField] private float coyoteTime = 0.2f; // Thời gian đệm cho phép nhảy sau khi nhấn nút
     [SerializeField] private float jumpBufferTime = 0.2f; // Thời gian đệm cho phép nhảy sau khi rời mặt đất
-    [SerializeField]private int maxAirJumps = 1;
+    [SerializeField] private int maxAirJumps = 1;
 
     //Jump variables
     private int _currentAirJumps;
@@ -60,7 +60,7 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        
+
     }
 
     void Update()
@@ -68,8 +68,8 @@ public class PlayerController : MonoBehaviour
         UpdateJumpTimer();
         UpdatePlayerState();
         UpdateAnimation();
-        if (!_touchGround.IsOnWall) Debug.Log(_touchGround.IsOnWall);
-    
+        Debug.Log($"Wall left: {_touchGround.IsOnLeftWall}, Wall right: {_touchGround.IsOnRightWall}");
+
     }
 
     void FixedUpdate()
@@ -84,31 +84,16 @@ public class PlayerController : MonoBehaviour
 
     #region Movement Logic
 
+    
     private void Move()
     {
-        float moveDirection = _moveInput.x;
-        if (_touchGround.IsOnWall && ISMovingTowardsWall(moveDirection))
+        float targetVelocityX = _moveInput.x * _currentSpeed;
+        if ((_moveInput.x > 0f && _touchGround.IsOnRightWall) || (_moveInput.x < 0f && _touchGround.IsOnLeftWall))
         {
-            // Nếu đang chạm tường và di chuyển về phía tường, không cho di chuyển
-            _rigidbody.velocity = new Vector2(0, _rigidbody.velocity.y);
-            return;
+            targetVelocityX = 0;
         }
-        // Di chuyển player theo horizontal input
-        _rigidbody.velocity = new Vector2(_moveInput.x * _currentSpeed, _rigidbody.velocity.y);
-    }
-    private bool ISMovingTowardsWall(float moveDirection)
-    {
-        
-        if (_isFacingRight && moveDirection > 0.1f)
-        {
-            return true; // Moving right towards wall
-        }
-        else if (!_isFacingRight && moveDirection < -0.1f)
-        {
-            return true; // Moving left towards wall
-        }
-        
-        return false;
+
+        _rigidbody.velocity = new Vector2(targetVelocityX, _rigidbody.velocity.y);
     }
 
     private void UpdatePlayerState()
@@ -131,9 +116,8 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-
-            bool isBlockedByWall = _touchGround.IsOnWall;
-            if (!_isMoving || isBlockedByWall)
+            
+            if (!_isMoving)
             {
                 SetState(PlayerState.PlayerIdle);
             }
@@ -198,7 +182,7 @@ public class PlayerController : MonoBehaviour
     }
 
     #endregion
-    
+
     #region Jump Logic
 
     private void UpdateJumpTimer()
@@ -246,16 +230,16 @@ public class PlayerController : MonoBehaviour
     {
         // Reset vertical velocity trước khi jump
         _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, 0f);
-        
+
         // Apply jump force
         _rigidbody.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-        
+
         // Consume air jump nếu không còn coyote time
         if (_coyoteTimeCounter <= 0)
         {
             _currentAirJumps--;
         }
-        
+
         // Reset coyote time để tránh double jump không mong muốn
         _coyoteTimeCounter = 0;
     }
@@ -286,7 +270,7 @@ public class PlayerController : MonoBehaviour
     public void OnMove(InputAction.CallbackContext context)
     {
         _moveInput = context.ReadValue<Vector2>();
-        
+
         // Xử lý hướng quay mặt
         if (_moveInput.x != 0)
         {
@@ -297,7 +281,7 @@ public class PlayerController : MonoBehaviour
     private void SetFacing(Vector2 moveInput)
     {
         bool shouldFaceRight = moveInput.x > 0;
-        
+
         if (shouldFaceRight != _isFacingRight)
         {
             _isFacingRight = shouldFaceRight;
@@ -326,7 +310,7 @@ public class PlayerController : MonoBehaviour
             _isJumpPressed = false;
             _isJumpHeld = false;
         }
-        
+
 
     }
     #endregion
