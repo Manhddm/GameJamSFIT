@@ -59,7 +59,8 @@ public class PlayerController : MonoBehaviour
 
     [Header("Attack Settings")]
     [SerializeField] private MeleeHitbox meleeHitbox;
-    [SerializeField] private float meleeAttackDuration = 0.5f;
+    // **THAY ĐỔI**: Xóa biến meleeAttackDuration, thay bằng biến tự động đọc độ dài animation
+    private float _meleeAttackAnimLength;
 
     //Jump variables
     private int _currentAirJumps;
@@ -84,15 +85,32 @@ public class PlayerController : MonoBehaviour
         {
             meleeHitbox.gameObject.SetActive(false);
         }
+
+        // **THAY ĐỔI**: Tự động tìm và lưu lại độ dài của animation tấn công
+        // Điều này đảm bảo thời gian tấn công luôn đồng bộ với animation.
+        foreach(var clip in _animator.runtimeAnimatorController.animationClips)
+        {
+            if(clip.name == "PlayerAttack01")
+            {
+                _meleeAttackAnimLength = clip.length;
+                break;
+            }
+        }
+        if (_meleeAttackAnimLength == 0)
+        {
+            Debug.LogWarning("Không tìm thấy Animation Clip 'PlayerAttack01'. Sử dụng giá trị mặc định 0.5s. Tấn công có thể không đồng bộ. Hãy chắc chắn tên clip trong Animator khớp chính xác.");
+            _meleeAttackAnimLength = 0.5f; // Giá trị dự phòng nếu không tìm thấy clip
+        }
     }
 
     void Update()
     {
-        // Cập nhật tốc độ trước khi xử lý các trạng thái khác
         UpdateSpeed();
         UpdateJumpTimer();
         UpdatePlayerState();
         UpdateAnimation();
+        
+        _previousState = _currentState;
     }
 
     void FixedUpdate()
@@ -129,8 +147,6 @@ public class PlayerController : MonoBehaviour
     private void UpdatePlayerState()
     {
         if (_isAttacking) return;
-
-        _previousState = _currentState;
 
         _isMoving = Mathf.Abs(_moveInput.x) > 0.1f;
         if (!_touchGround.IsGrounded)
@@ -171,14 +187,11 @@ public class PlayerController : MonoBehaviour
         if (_currentState != newState)
         {
             _currentState = newState;
-            // Không gọi UpdateSpeed() ở đây nữa
         }
     }
 
     private void UpdateSpeed()
     {
-        // Chỉ cập nhật tốc độ di chuyển ngang khi nhân vật đang ở trên mặt đất.
-        // Điều này giúp bảo toàn tốc độ (đi bộ hoặc chạy) khi nhân vật nhảy lên.
         if (_touchGround.IsGrounded)
         {
             if (_isRunning)
@@ -204,7 +217,6 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region Jump Logic
-    // ... (Phần code Jump không thay đổi)
     private void UpdateJumpTimer() { if (_touchGround.IsGrounded) { _coyoteTimeCounter = coyoteTime; } else { _coyoteTimeCounter -= Time.deltaTime; } if (_jumpBufferCounter > 0) { _jumpBufferCounter -= Time.deltaTime; } }
     private void HandleJump() { if (_touchGround.IsGrounded && !_wasGround) { _currentAirJumps = maxAirJumps; } _wasGround = _touchGround.IsGrounded; if (_jumpBufferCounter > 0 && CanJump()) { PerformJump(); _jumpBufferCounter = 0; } }
     private bool CanJump() { return (_coyoteTimeCounter > 0) || (_currentAirJumps > 0); }
@@ -258,17 +270,11 @@ public class PlayerController : MonoBehaviour
         _isAttacking = true;
         SetState(PlayerState.PlayerAttack01);
 
-        meleeHitbox.StartAttack(_attackSystem.meleeDamage, _attackSystem.enemyLayers);
-        meleeHitbox.gameObject.SetActive(true);
-
-        yield return new WaitForSeconds(0.2f); // Thời gian hitbox tồn tại
-
-        meleeHitbox.gameObject.SetActive(false);
-
-        yield return new WaitForSeconds(meleeAttackDuration - 0.2f);
+        // **THAY ĐỔI**: Canh thời gian của coroutine theo độ dài animation đã đọc được
+        // Điều này đảm bảo coroutine và animation kết thúc cùng lúc.
+        yield return new WaitForSeconds(_meleeAttackAnimLength);
 
         _isAttacking = false;
-        SetState(PlayerState.PlayerIdle);
     }
 
     #endregion
