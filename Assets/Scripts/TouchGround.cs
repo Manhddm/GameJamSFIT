@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
 /// Script này chịu trách nhiệm phát hiện va chạm với môi trường (đất, tường, trần nhà)
@@ -31,7 +32,7 @@ public class TouchGround : MonoBehaviour
     private readonly RaycastHit2D[] _wallHits = new RaycastHit2D[3];
     private readonly RaycastHit2D[] _ceilingHits = new RaycastHit2D[3];
 
-    public CapsuleCollider2D _collider2D;
+    [FormerlySerializedAs("_collider2D")] public CapsuleCollider2D collider2D;
 
     // Properties để các script khác có thể truy cập (chỉ đọc)
     public bool IsGrounded => _isGrounded;
@@ -48,8 +49,8 @@ public class TouchGround : MonoBehaviour
 
     private void Awake()
     {
-        if (_collider2D == null)
-            _collider2D = GetComponent<CapsuleCollider2D>();
+        if (collider2D == null)
+            collider2D = GetComponent<CapsuleCollider2D>();
     }
 
     private void FixedUpdate()
@@ -71,7 +72,7 @@ public class TouchGround : MonoBehaviour
 
     private void CheckGroundCollision()
     {
-        int hitCount = _collider2D.Cast(Vector2.down, castFilter, _groundHits, groundDistance);
+        int hitCount = collider2D.Cast(Vector2.down, castFilter, _groundHits, groundDistance);
         if (hitCount > 0)
         {
             _isGrounded = true;
@@ -82,7 +83,7 @@ public class TouchGround : MonoBehaviour
     private void CheckWallCollision()
     {
         // Kiểm tra tường bên phải
-        int rightHitCount = _collider2D.Cast(Vector2.right, castFilter, _wallHits, wallDistance);
+        int rightHitCount = collider2D.Cast(Vector2.right, castFilter, _wallHits, wallDistance);
         if (rightHitCount > 0)
         {
             _isOnRightWall = true;
@@ -91,7 +92,7 @@ public class TouchGround : MonoBehaviour
         }
 
         // Kiểm tra tường bên trái
-        int leftHitCount = _collider2D.Cast(Vector2.left, castFilter, _wallHits, wallDistance);
+        int leftHitCount = collider2D.Cast(Vector2.left, castFilter, _wallHits, wallDistance);
         if (leftHitCount > 0)
         {
             _isOnLeftWall = true;
@@ -102,23 +103,23 @@ public class TouchGround : MonoBehaviour
 
     private void CheckCeilingCollision()
     {
-        int hitCount = _collider2D.Cast(Vector2.up, castFilter, _ceilingHits, ceilingDistance);
+        int hitCount = collider2D.Cast(Vector2.up, castFilter, _ceilingHits, ceilingDistance);
         _isOnCeiling = hitCount > 0;
     }
 
     private void OnDrawGizmosSelected()
     {
-        if (_collider2D == null || !showDebugRays) return;
+        if (collider2D == null || !showDebugRays) return;
 
         // Vẽ các đường ray để debug
         Gizmos.color = Color.green;
-        Gizmos.DrawLine(_collider2D.bounds.center, _collider2D.bounds.center + Vector3.down * groundDistance);
+        Gizmos.DrawLine(collider2D.bounds.center, collider2D.bounds.center + Vector3.down * groundDistance);
 
         Gizmos.color = Color.blue;
-        Gizmos.DrawLine(_collider2D.bounds.center, _collider2D.bounds.center + Vector3.right * wallDistance);
-        Gizmos.DrawLine(_collider2D.bounds.center, _collider2D.bounds.center + Vector3.left * wallDistance);
+        Gizmos.DrawLine(collider2D.bounds.center, collider2D.bounds.center + Vector3.right * wallDistance);
+        Gizmos.DrawLine(collider2D.bounds.center, collider2D.bounds.center + Vector3.left * wallDistance);
 
         Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(_collider2D.bounds.center, _collider2D.bounds.center + Vector3.up * ceilingDistance);
+        Gizmos.DrawLine(collider2D.bounds.center, collider2D.bounds.center + Vector3.up * ceilingDistance);
     }
 }

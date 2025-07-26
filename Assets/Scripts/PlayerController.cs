@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 public class PlayerController : MonoBehaviour
 {
@@ -33,7 +34,7 @@ public class PlayerController : MonoBehaviour
     private TouchGround _touchGround;
     private AttackSystem _attackSystem;
 
-    [SerializeField] private float _currentSpeed;
+    [FormerlySerializedAs("_currentSpeed")] [SerializeField] private float currentSpeed;
     public float speed = 5f;
     public float runMultiplier = 2f;
 
@@ -42,6 +43,11 @@ public class PlayerController : MonoBehaviour
     private bool _isRunning = false;
     private bool _isMoving = false;
     private bool _isAttacking = false;
+    
+    [Header("Movement Smoothing")]
+    [Tooltip("Thời gian để làm mượt chuyển động. Giá trị càng nhỏ càng tăng tốc nhanh.")]
+    [SerializeField] private float movementSmoothing = 0.05f;
+    private Vector2 _velocity = Vector2.zero; // Biến tham chiếu cho hàm SmoothDamp
 
     [Header("Jump Settings")]
     [SerializeField] private float jumpForce = 10f;
@@ -52,7 +58,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private int maxAirJumps = 1;
 
     [Header("Attack Settings")]
-    [SerializeField] private GameObject meleeHitboxObject;
+    [SerializeField] private MeleeHitbox meleeHitbox;
     [SerializeField] private float meleeAttackDuration = 0.5f;
 
     //Jump variables
@@ -72,16 +78,18 @@ public class PlayerController : MonoBehaviour
         _rigidbody = GetComponent<Rigidbody2D>();
         _touchGround = GetComponent<TouchGround>();
         _attackSystem = GetComponent<AttackSystem>();
-        _currentSpeed = speed;
+        currentSpeed = speed;
 
-        if (meleeHitboxObject != null)
+        if (meleeHitbox != null)
         {
-            meleeHitboxObject.SetActive(false);
+            meleeHitbox.gameObject.SetActive(false);
         }
     }
 
     void Update()
     {
+        // Cập nhật tốc độ trước khi xử lý các trạng thái khác
+        UpdateSpeed();
         UpdateJumpTimer();
         UpdatePlayerState();
         UpdateAnimation();
@@ -106,14 +114,16 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        float targetVelocityX = _moveInput.x * _currentSpeed;
+        float targetVelocityX = _moveInput.x * currentSpeed;
 
         if ((_moveInput.x > 0f && _touchGround.IsOnRightWall) || (_moveInput.x < 0f && _touchGround.IsOnLeftWall))
         {
             targetVelocityX = 0;
         }
 
-        _rigidbody.velocity = new Vector2(targetVelocityX, _rigidbody.velocity.y);
+        Vector2 targetVelocity = new Vector2(targetVelocityX, _rigidbody.velocity.y);
+        
+        _rigidbody.velocity = Vector2.SmoothDamp(_rigidbody.velocity, targetVelocity, ref _velocity, movementSmoothing);
     }
 
     private void UpdatePlayerState()
@@ -161,31 +171,24 @@ public class PlayerController : MonoBehaviour
         if (_currentState != newState)
         {
             _currentState = newState;
-            UpdateSpeed();
+            // Không gọi UpdateSpeed() ở đây nữa
         }
     }
 
     private void UpdateSpeed()
     {
-        switch (_currentState)
+        // Chỉ cập nhật tốc độ di chuyển ngang khi nhân vật đang ở trên mặt đất.
+        // Điều này giúp bảo toàn tốc độ (đi bộ hoặc chạy) khi nhân vật nhảy lên.
+        if (_touchGround.IsGrounded)
         {
-            case PlayerState.PlayerIdle:
-            case PlayerState.PlayerAttack01:
-                _currentSpeed = 0f;
-                break;
-            case PlayerState.PlayerWalk:
-                _currentSpeed = speed;
-                break;
-            case PlayerState.PlayerRun:
-                _currentSpeed = speed * runMultiplier;
-                break;
-            case PlayerState.PlayerJump:
-            case PlayerState.PlayerFall:
-            case PlayerState.PlayerRising:
-                break;
-            default:
-                _currentSpeed = speed;
-                break;
+            if (_isRunning)
+            {
+                currentSpeed = speed * runMultiplier;
+            }
+            else
+            {
+                currentSpeed = speed;
+            }
         }
     }
 
@@ -194,16 +197,6 @@ public class PlayerController : MonoBehaviour
         if (_currentState != _previousState)
         {
             string animationToPlay = _currentState.ToString();
-
-            // if (_currentState == PlayerState.PlayerAttack1)
-            // {
-            //     // Tạm thời dùng Idle để không lỗi.
-            //     // TODO: Khi có animation tấn công, bạn có thể đổi tên này thành "PlayerAttack"
-            //     // hoặc dùng một logic phức tạp hơn để chọn animation dựa trên _currentAttackType.
-            //     animationToPlay = "PlayerIdle";
-            //     Debug.LogWarning($"Chưa có animation cho state 'PlayerAttack'. Sử dụng 'PlayerIdle' thay thế.");
-            // }
-
             _animator.Play(animationToPlay);
         }
     }
@@ -221,7 +214,6 @@ public class PlayerController : MonoBehaviour
 
     #region Attack Logic
     
-    // Hàm này sẽ được gọi bởi nút tấn công chính (ví dụ: chuột trái)
     public void OnAttack(InputAction.CallbackContext context)
     {
         if (context.started && CanAttack())
@@ -232,17 +224,12 @@ public class PlayerController : MonoBehaviour
                     StartCoroutine(MeleeAttackRoutine());
                     break;
                 case AttackType.Bow:
-                    // Tạm thời chưa có logic. Khi cần, bạn sẽ gọi coroutine bắn cung ở đây.
                     Debug.Log("Chưa triển khai tấn công bằng cung!");
-                    break;
-                default:
-                    StartCoroutine(MeleeAttackRoutine());
                     break;
             }
         }
     }
 
-    // Hàm này gọi khi nhấn phím 1
     public void OnSelectWeapon1(InputAction.CallbackContext context)
     {
         if (context.started && !_isAttacking)
@@ -252,7 +239,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // Hàm này gọi khi nhấn phím 2
     public void OnSelectWeapon2(InputAction.CallbackContext context)
     {
         if (context.started && !_isAttacking)
@@ -272,21 +258,17 @@ public class PlayerController : MonoBehaviour
         _isAttacking = true;
         SetState(PlayerState.PlayerAttack01);
 
-        if (meleeHitboxObject != null)
-        {
-            meleeHitboxObject.SetActive(true);
-        }
+        meleeHitbox.StartAttack(_attackSystem.meleeDamage, _attackSystem.enemyLayers);
+        meleeHitbox.gameObject.SetActive(true);
 
-        yield return new WaitForSeconds(0.2f); 
+        yield return new WaitForSeconds(0.2f); // Thời gian hitbox tồn tại
 
-        if (meleeHitboxObject != null)
-        {
-            meleeHitboxObject.SetActive(false);
-        }
+        meleeHitbox.gameObject.SetActive(false);
 
-        yield return new WaitForSeconds(meleeAttackDuration - 0.2f); 
+        yield return new WaitForSeconds(meleeAttackDuration - 0.2f);
 
         _isAttacking = false;
+        SetState(PlayerState.PlayerIdle);
     }
 
     #endregion
@@ -304,10 +286,13 @@ public class PlayerController : MonoBehaviour
     {
         if (Application.isEditor)
         {
+            GUI.color = Color.black;
+            GUILayout.BeginArea(new Rect(10, 10, 250, 100));
             GUILayout.Label($"Current State: {_currentState}");
             GUILayout.Label($"Current Weapon: {_currentAttackType}");
             GUILayout.Label($"Grounded: {_touchGround.IsGrounded}");
             GUILayout.Label($"Velocity Y: {_rigidbody.velocity.y:F2}");
+            GUILayout.EndArea();
         }
     }
     #endregion
