@@ -25,10 +25,10 @@ public class MeleeHitbox : MonoBehaviour
         // Kiểm tra xem có va chạm với layer của kẻ thù không
         if ((_attackSystem.enemyLayers.value & (1 << other.gameObject.layer)) > 0)
         {
-            Debug.Log($"Vùng chém đã va chạm với: {other.name}");
+            Debug.Log($"Vùng chém đã va chạm với: {other.transform.parent.name} + {other.name}");
             
             // Lấy component máu của kẻ thù và gây sát thương
-            // Ví dụ: other.GetComponent<EnemyHealth>()?.TakeDamage(_attackSystem.meleeDamage);
+            other.GetComponent<EnemyHealth>()?.TakeDamage(_attackSystem.meleeDamage);
         }
     }
 }

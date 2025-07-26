@@ -457,6 +457,7 @@ MonoBehaviour:
   wallDistance: 0.5
   ceilingDistance: 0.5
   showDebugRays: 1
+  _collider2D: {fileID: 0}
 --- !u!114 &6809288777293090116
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -472,7 +473,7 @@ MonoBehaviour:
   meleeDamage: 20
   enemyLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 256
 --- !u!1 &2258060875020431787
 GameObject:
   m_ObjectHideFlags: 0

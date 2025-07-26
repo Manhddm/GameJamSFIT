@@ -5,7 +5,7 @@ using UnityEngine;
 /// bằng cách sử dụng CapsuleCollider2D.Cast.
 /// Nó chỉ cung cấp thông tin, không chứa logic hành vi của nhân vật.
 /// </summary>
-[RequireComponent(typeof(CapsuleCollider2D))]
+
 public class TouchGround : MonoBehaviour
 {
     [Header("Bộ lọc va chạm")]
@@ -13,9 +13,8 @@ public class TouchGround : MonoBehaviour
 
     [Header("Khoảng cách phát hiện")]
     [SerializeField] private float groundDistance = 0.1f;
-
-    [SerializeField] private float wallDistance = 0.5f;
-    [SerializeField] private float ceilingDistance = 0.5f;
+    [SerializeField] private float wallDistance = 0.1f;
+    [SerializeField] private float ceilingDistance = 0.1f;
 
     [Header("Debug")]
     [SerializeField] private bool showDebugRays = true;
@@ -32,7 +31,7 @@ public class TouchGround : MonoBehaviour
     private readonly RaycastHit2D[] _wallHits = new RaycastHit2D[3];
     private readonly RaycastHit2D[] _ceilingHits = new RaycastHit2D[3];
 
-    private CapsuleCollider2D _playerCollider;
+    public CapsuleCollider2D _collider2D;
 
     // Properties để các script khác có thể truy cập (chỉ đọc)
     public bool IsGrounded => _isGrounded;
@@ -49,7 +48,8 @@ public class TouchGround : MonoBehaviour
 
     private void Awake()
     {
-        _playerCollider = GetComponent<CapsuleCollider2D>();
+        if (_collider2D == null)
+            _collider2D = GetComponent<CapsuleCollider2D>();
     }
 
     private void FixedUpdate()
@@ -71,7 +71,7 @@ public class TouchGround : MonoBehaviour
 
     private void CheckGroundCollision()
     {
-        int hitCount = _playerCollider.Cast(Vector2.down, castFilter, _groundHits, groundDistance);
+        int hitCount = _collider2D.Cast(Vector2.down, castFilter, _groundHits, groundDistance);
         if (hitCount > 0)
         {
             _isGrounded = true;
@@ -82,7 +82,7 @@ public class TouchGround : MonoBehaviour
     private void CheckWallCollision()
     {
         // Kiểm tra tường bên phải
-        int rightHitCount = _playerCollider.Cast(Vector2.right, castFilter, _wallHits, wallDistance);
+        int rightHitCount = _collider2D.Cast(Vector2.right, castFilter, _wallHits, wallDistance);
         if (rightHitCount > 0)
         {
             _isOnRightWall = true;
@@ -91,7 +91,7 @@ public class TouchGround : MonoBehaviour
         }
 
         // Kiểm tra tường bên trái
-        int leftHitCount = _playerCollider.Cast(Vector2.left, castFilter, _wallHits, wallDistance);
+        int leftHitCount = _collider2D.Cast(Vector2.left, castFilter, _wallHits, wallDistance);
         if (leftHitCount > 0)
         {
             _isOnLeftWall = true;
@@ -102,23 +102,23 @@ public class TouchGround : MonoBehaviour
 
     private void CheckCeilingCollision()
     {
-        int hitCount = _playerCollider.Cast(Vector2.up, castFilter, _ceilingHits, ceilingDistance);
+        int hitCount = _collider2D.Cast(Vector2.up, castFilter, _ceilingHits, ceilingDistance);
         _isOnCeiling = hitCount > 0;
     }
 
     private void OnDrawGizmosSelected()
     {
-        if (_playerCollider == null || !showDebugRays) return;
+        if (_collider2D == null || !showDebugRays) return;
 
         // Vẽ các đường ray để debug
         Gizmos.color = Color.green;
-        Gizmos.DrawLine(_playerCollider.bounds.center, _playerCollider.bounds.center + Vector3.down * groundDistance);
+        Gizmos.DrawLine(_collider2D.bounds.center, _collider2D.bounds.center + Vector3.down * groundDistance);
 
         Gizmos.color = Color.blue;
-        Gizmos.DrawLine(_playerCollider.bounds.center, _playerCollider.bounds.center + Vector3.right * wallDistance);
-        Gizmos.DrawLine(_playerCollider.bounds.center, _playerCollider.bounds.center + Vector3.left * wallDistance);
+        Gizmos.DrawLine(_collider2D.bounds.center, _collider2D.bounds.center + Vector3.right * wallDistance);
+        Gizmos.DrawLine(_collider2D.bounds.center, _collider2D.bounds.center + Vector3.left * wallDistance);
 
         Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(_playerCollider.bounds.center, _playerCollider.bounds.center + Vector3.up * ceilingDistance);
+        Gizmos.DrawLine(_collider2D.bounds.center, _collider2D.bounds.center + Vector3.up * ceilingDistance);
     }
 }
