@@ -1,7 +1,8 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(TouchGround), typeof(Rigidbody2D), typeof(EnemyHealth))]
+[RequireComponent(typeof(TouchGround), typeof(Rigidbody2D), typeof(HealthSystem))]
 public class BossController : MonoBehaviour
 {
     // Enum định nghĩa các trạng thái của Boss
@@ -10,7 +11,7 @@ public class BossController : MonoBehaviour
         Idle,
         Walk,
         Chase,
-        Attack,
+        Attack1,
         Hurt,
         Death
     }
@@ -18,7 +19,7 @@ public class BossController : MonoBehaviour
     [Header("Component References")]
     private Rigidbody2D _rb;
     private TouchGround _touchGround;
-    private EnemyHealth _health;
+    private HealthSystem _health; // <-- THAY ĐỔI: Sử dụng HealthSystem
     private Animator _animator;
     private Transform _playerTransform;
 
@@ -44,25 +45,27 @@ public class BossController : MonoBehaviour
     private bool _isHurt = false;
     private bool _isDead = false;
     private float _lastAttackTime;
+    
+    // Animation Lengths
+    private float _attackAnimLength;
+    private float _hurtAnimLength;
+    private float _deathAnimLength;
 
     // Movement
-    // Giá trị khởi tạo là true, giả định sprite gốc quay mặt sang phải
     private bool _isFacingRight = true;
 
     #region MonoBehaviour Methods
 
     private void Awake()
     {
-        // Lấy các component cần thiết
         _rb = GetComponent<Rigidbody2D>();
         _touchGround = GetComponent<TouchGround>();
-        _health = GetComponent<EnemyHealth>();
+        _health = GetComponent<HealthSystem>(); // <-- THAY ĐỔI: Lấy component HealthSystem
         _animator = GetComponent<Animator>();
 
-        // Khởi tạo các điểm tuần tra trong code
         InitializePatrolPoints();
+        CacheAnimationLengths();
 
-        // Tìm đối tượng người chơi bằng Tag "Player"
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
@@ -72,11 +75,14 @@ public class BossController : MonoBehaviour
         {
             Debug.LogError("Không tìm thấy đối tượng người chơi! Hãy chắc chắn Player có tag 'Player'.");
         }
+        
+        // **THÊM MỚI**: Lắng nghe các sự kiện từ HealthSystem
+        _health.OnHurt.AddListener(HandleHurt);
+        _health.OnDie.AddListener(HandleDeath);
     }
 
     private void Start()
     {
-        // Thiết lập trạng thái ban đầu và mục tiêu tuần tra
         _currentTarget = _patrolPointB;
         SwitchState(BossState.Walk);
         if (_attackHitbox != null)
@@ -88,8 +94,6 @@ public class BossController : MonoBehaviour
     private void Update()
     {
         if (_isDead) return;
-
-        // Chạy máy trạng thái
         RunStateMachine();
     }
 
@@ -97,12 +101,9 @@ public class BossController : MonoBehaviour
     {
         if (_isDead || _isHurt || _isAttacking)
         {
-             // Đứng yên khi chết, bị thương hoặc đang tấn công
             _rb.velocity = new Vector2(0, _rb.velocity.y);
             return;
         }
-
-        // Xử lý di chuyển vật lý
         HandleMovement();
     }
 
@@ -112,20 +113,36 @@ public class BossController : MonoBehaviour
     
     private void InitializePatrolPoints()
     {
-        // Tạo một đối tượng cha để chứa các điểm tuần tra cho gọn gàng
         GameObject patrolPointsContainer = new GameObject("PatrolPoints_" + gameObject.name);
-        // Đặt nó cùng cấp với Boss trong Hierarchy
         patrolPointsContainer.transform.SetParent(this.transform.parent, true);
 
-        // Điểm A bên trái của vị trí bắt đầu của Boss
         _patrolPointA = new GameObject("PatrolPoint_A").transform;
         _patrolPointA.position = transform.position - new Vector3(_patrolDistance, 0, 0);
         _patrolPointA.SetParent(patrolPointsContainer.transform);
 
-        // Điểm B bên phải của vị trí bắt đầu của Boss
         _patrolPointB = new GameObject("PatrolPoint_B").transform;
         _patrolPointB.position = transform.position + new Vector3(_patrolDistance, 0, 0);
         _patrolPointB.SetParent(patrolPointsContainer.transform);
+    }
+    
+    private void CacheAnimationLengths()
+    {
+        var clips = _animator.runtimeAnimatorController.animationClips;
+        foreach(var clip in clips)
+        {
+            switch(clip.name)
+            {
+                case "Attack":
+                    _attackAnimLength = clip.length;
+                    break;
+                case "Hurt":
+                    _hurtAnimLength = clip.length;
+                    break;
+                case "Death":
+                    _deathAnimLength = clip.length;
+                    break;
+            }
+        }
     }
 
     #endregion
@@ -134,11 +151,11 @@ public class BossController : MonoBehaviour
 
     private void RunStateMachine()
     {
+        // **THAY ĐỔI**: Không cho phép chạy state machine khi đang bị thương
         if (_isHurt || _isAttacking || _playerTransform == null) return;
 
         float distanceToPlayer = Vector2.Distance(transform.position, _playerTransform.position);
 
-        // Logic chuyển đổi trạng thái
         if (distanceToPlayer <= _attackRange && Time.time >= _lastAttackTime + _attackCooldown)
         {
             StartCoroutine(AttackRoutine());
@@ -156,10 +173,7 @@ public class BossController : MonoBehaviour
     private void SwitchState(BossState newState)
     {
         if (_currentState == newState) return;
-
         _currentState = newState;
-        
-        // Cập nhật animation tương ứng với trạng thái
         _animator.Play(_currentState.ToString());
     }
 
@@ -175,19 +189,13 @@ public class BossController : MonoBehaviour
             return;
         }
 
-        float direction = 0;
+        float direction = (_currentState == BossState.Walk) 
+            ? (_currentTarget.position.x > transform.position.x ? 1 : -1) 
+            : (_playerTransform.position.x > transform.position.x ? 1 : -1);
 
-        if (_currentState == BossState.Walk) // Tuần tra
+        if (_currentState == BossState.Walk && Vector2.Distance(transform.position, _currentTarget.position) < 0.5f)
         {
-            direction = (_currentTarget.position.x > transform.position.x) ? 1 : -1;
-            if (Vector2.Distance(transform.position, _currentTarget.position) < 0.5f)
-            {
-                _currentTarget = (_currentTarget == _patrolPointA) ? _patrolPointB : _patrolPointA;
-            }
-        }
-        else // Đuổi theo người chơi
-        {
-            direction = (_playerTransform.position.x > transform.position.x) ? 1 : -1;
+            _currentTarget = (_currentTarget == _patrolPointA) ? _patrolPointB : _patrolPointA;
         }
         
         Flip(direction);
@@ -208,18 +216,18 @@ public class BossController : MonoBehaviour
         }
     }
 
-    public void OnTakeDamage()
+    // **THÊM MỚI**: Hàm xử lý khi nhận sự kiện OnHurt
+    private void HandleHurt()
     {
         if (_isDead) return;
+        StartCoroutine(HurtRoutine());
+    }
 
-        if (_health.currentHealth <= 0)
-        {
-            StartCoroutine(DieRoutine());
-        }
-        else
-        {
-            StartCoroutine(HurtRoutine());
-        }
+    // **THÊM MỚI**: Hàm xử lý khi nhận sự kiện OnDie
+    private void HandleDeath()
+    {
+        if (_isDead) return;
+        StartCoroutine(DieRoutine());
     }
 
     #endregion
@@ -230,37 +238,34 @@ public class BossController : MonoBehaviour
     {
         _isAttacking = true;
         _lastAttackTime = Time.time;
-        SwitchState(BossState.Attack);
-
-        yield return new WaitForSeconds(0.5f); 
-
-        if (_attackHitbox != null)
-        {
-            _attackHitbox.StartAttack(_attackDamage, _playerLayer);
-            _attackHitbox.gameObject.SetActive(true);
-        }
-
-        yield return new WaitForSeconds(0.3f); 
-
-        if (_attackHitbox != null)
-        {
-            _attackHitbox.gameObject.SetActive(false);
-        }
-
-        yield return new WaitForSeconds(0.5f);
+        SwitchState(BossState.Attack1);
+        
+        yield return new WaitForSeconds(_attackAnimLength);
 
         _isAttacking = false;
-        SwitchState(BossState.Idle);
+        // Chỉ chuyển về Idle nếu không bị ngắt bởi trạng thái khác (như Hurt)
+        if (!_isHurt)
+        {
+            SwitchState(BossState.Idle);
+        }
     }
 
     private IEnumerator HurtRoutine()
     {
         _isHurt = true;
         SwitchState(BossState.Hurt);
-        yield return new WaitForSeconds(0.5f); 
+        
+        // Đợi cho đến khi animation bị thương kết thúc
+        yield return new WaitForSeconds(_hurtAnimLength); 
+        
         _isHurt = false;
-        SwitchState(BossState.Idle);
+        // Chỉ chuyển về Idle nếu không bị ngắt bởi trạng thái khác
+        if (!_isAttacking && !_isDead)
+        {
+            SwitchState(BossState.Idle);
+        }
     }
+
 
     private IEnumerator DieRoutine()
     {
@@ -269,9 +274,31 @@ public class BossController : MonoBehaviour
         GetComponent<Collider2D>().enabled = false;
         _rb.simulated = false;
         
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(_deathAnimLength);
         
         Destroy(gameObject);
+    }
+
+    #endregion
+    
+    #region Animation Events
+
+    public void EnableAttackHitbox()
+    {
+        if (_attackHitbox != null)
+        {
+            // **THAY ĐỔI**: Cần đảm bảo MeleeHitbox tìm được HealthSystem trên Player
+            _attackHitbox.StartAttack(_attackDamage, _playerLayer);
+            _attackHitbox.gameObject.SetActive(true);
+        }
+    }
+
+    public void DisableAttackHitbox()
+    {
+        if (_attackHitbox != null)
+        {
+            _attackHitbox.gameObject.SetActive(false);
+        }
     }
 
     #endregion
@@ -302,6 +329,7 @@ public class BossController : MonoBehaviour
             GUILayout.Space(20);
             GUILayout.Label($"  Máu: {_health.currentHealth} / {_health.maxHealth}");
             GUILayout.Label($"  Trạng thái: {_currentState}");
+            GUILayout.Label($"  Bất tử: {_health.isInvincible}"); // Thêm debug
             GUILayout.EndVertical();
 
             GUILayout.EndArea();

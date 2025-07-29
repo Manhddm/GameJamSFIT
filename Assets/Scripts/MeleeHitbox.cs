@@ -4,44 +4,40 @@ using UnityEngine;
 
 public class MeleeHitbox : MonoBehaviour
 {
-    // Danh sách để theo dõi các đối tượng đã va chạm trong một lần tấn công
-    private List<Collider2D> _hitEnemies = new List<Collider2D>();
+    private List<Collider2D> _hitTargets = new List<Collider2D>();
     private float _damage;
-    private LayerMask _enemyLayers;
+    private LayerMask _targetLayers;
 
-    /// <summary>
-    /// Bắt đầu một chu kỳ tấn công mới, xóa danh sách đã đánh và thiết lập thông số
-    /// </summary>
-    public void StartAttack(float damage, LayerMask enemyLayers)
+    public void StartAttack(float damage, LayerMask targetLayers)
     {
-        _hitEnemies.Clear(); // <-- Đây là bước quan trọng nhất
+        _hitTargets.Clear();
         _damage = damage;
-        _enemyLayers = enemyLayers;
+        _targetLayers = targetLayers;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
         // Kiểm tra layer của đối tượng va chạm
-        if ((_enemyLayers.value & (1 << other.gameObject.layer)) == 0)
+        if ((_targetLayers.value & (1 << other.gameObject.layer)) == 0)
         {
-            return; // Bỏ qua nếu không phải layer của kẻ thù
+            return; // Bỏ qua nếu không phải layer mục tiêu
         }
 
-        // Kiểm tra xem kẻ thù này đã bị đánh trong lần tấn công này chưa
-        if (_hitEnemies.Contains(other))
+        // Kiểm tra xem mục tiêu này đã bị đánh trong lần tấn công này chưa
+        if (_hitTargets.Contains(other))
         {
             return; // Đã đánh rồi, bỏ qua
         }
 
-        // Lấy component máu và gây sát thương
-        EnemyHealth enemyHealth = other.GetComponentInParent<EnemyHealth>();
-        if (enemyHealth != null)
+        // **THAY ĐỔI**: Lấy component HealthSystem và gây sát thương
+        HealthSystem healthSystem = other.GetComponentInParent<HealthSystem>();
+        if (healthSystem != null)
         {
             Debug.Log($"Hitbox va chạm với: {other.gameObject.name}. Gây {_damage} sát thương.");
-            enemyHealth.TakeDamage(_damage);
+            healthSystem.TakeDamage(_damage);
 
-            // Thêm kẻ thù vào danh sách đã đánh
-            _hitEnemies.Add(other);
+            // Thêm mục tiêu vào danh sách đã đánh
+            _hitTargets.Add(other);
         }
     }
 }
