@@ -4,6 +4,9 @@ public enum EnumEntity
     isGrounded,
     isOnCeiling,
     isOnWall,
-    canMove
+    canMove,
+    isAlive,
+    hit,
+    lockVelocity
   
 }

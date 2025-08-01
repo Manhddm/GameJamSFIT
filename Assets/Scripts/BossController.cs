@@ -3,15 +3,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(TouchGround), typeof(Rigidbody2D), typeof(HealthSystem))]
+[RequireComponent(typeof(TouchGround), typeof(Rigidbody2D))]
 public class BossController : MonoBehaviour
 {
     public float walkSpeed;
-    [SerializeField]
-    private Rigidbody2D rb;
-    [SerializeField]
-    private TouchGround touchGround;
+    public float WalkSpeed{
+        get
+        {
+            if (_animator.GetBool(EnumEntity.canMove.ToString())) return walkSpeed;
+            return 0;
+        }
+        set
+        {
+            
+        }
+    }
+    [SerializeField] private Rigidbody2D rb;
+    [SerializeField] private TouchGround touchGround;
     private Animator _animator;
+    [SerializeField]
+    public DetectionZone detectionZone;
+    private Damageable _damageable;
 
     enum WalkableDirection
     {
@@ -21,13 +33,15 @@ public class BossController : MonoBehaviour
 
     private WalkableDirection _walkableDirection = WalkableDirection.Right;
     public Vector2 walkDirectionVector = Vector2.right;
+
     private WalkableDirection WalkDirection
     {
-        get{ return _walkableDirection; }
+        get { return _walkableDirection; }
         set
         {
             if (_walkableDirection == value) return;
-            gameObject.transform.localScale = new Vector3(gameObject.transform.localScale.x *-1, gameObject.transform.localScale.y, gameObject.transform.localScale.z);
+            gameObject.transform.localScale = new Vector3(gameObject.transform.localScale.x * -1,
+                gameObject.transform.localScale.y, gameObject.transform.localScale.z);
             if (gameObject.transform.localScale.x > 0)
             {
                 walkDirectionVector = Vector2.right;
@@ -46,11 +60,19 @@ public class BossController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         _animator = GetComponent<Animator>();
         touchGround = GetComponent<TouchGround>();
+        detectionZone = GetComponentInChildren<DetectionZone>();
+        _damageable = GetComponentInChildren<Damageable>();
+    }
+
+    private void Update()
+    {
+        HasTarget = detectionZone.detectedColliders.Count > 0;
     }
 
     private void FixedUpdate()
     {
-        Move();
+        if (!_damageable.LockVelocity)
+            Move();
     }
 
     #endregion
@@ -63,7 +85,8 @@ public class BossController : MonoBehaviour
         {
             FlipDirection();
         }
-        rb.velocity = new Vector2(walkSpeed * walkDirectionVector.x, rb.velocity.y);
+
+        rb.velocity = new Vector2(WalkSpeed * walkDirectionVector.x, rb.velocity.y);
     }
 
     private void FlipDirection()
@@ -83,4 +106,25 @@ public class BossController : MonoBehaviour
     }
 
     #endregion
+
+    #region Attack
+    [SerializeField]
+    private bool _hasTarget = false;
+
+    public bool HasTarget
+    {
+        get{return _hasTarget;}
+        set
+        {
+            _hasTarget = value;
+            _animator.SetBool(EnemyState.hasTarget.ToString(),value);
+        }
+    }
+
+    #endregion
+    
+    public void OnHit(int damage, Vector2 knockback)
+    {
+        rb.velocity = new Vector2(knockback.x, knockback.y + rb.velocity.y);
+    }
 }

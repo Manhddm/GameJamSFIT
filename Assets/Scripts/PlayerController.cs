@@ -69,6 +69,7 @@ public class PlayerController : MonoBehaviour
     private Animator _animator;
     private TouchGround _touch;
 
+
     public bool CanMove
     {
         get
@@ -85,17 +86,29 @@ public class PlayerController : MonoBehaviour
         _rb = GetComponent<Rigidbody2D>();
         _animator = GetComponent<Animator>();
         _touch = GetComponent<TouchGround>();
+
     }
 
-    private void Update()
+    public bool IsAlive
     {
+        get => _animator.GetBool(EnumEntity.isAlive.ToString());
     }
+
 
     private void FixedUpdate()
     {
-        Move();
+        if (!LockVelocity)
+            Move();
 
         _animator.SetFloat(PlayerState.yVelocity.ToString(), _rb.velocity.y);
+    }
+
+    public bool LockVelocity
+    {
+        get
+        {
+            return _animator.GetBool(EnumEntity.lockVelocity.ToString());
+        }
     }
 
     private void Move()
@@ -106,17 +119,24 @@ public class PlayerController : MonoBehaviour
     public void OnMove(InputAction.CallbackContext context)
     {
         moveInput = context.ReadValue<Vector2>();
-        IsMoving = moveInput!= Vector2.zero;
-        if (IsMoving)
+        if (IsAlive)
         {
-            SetFacing(moveInput);
+            IsMoving = moveInput!= Vector2.zero;
+            if (IsMoving)
+            {
+                SetFacing(moveInput);
+            }
+            if (context.canceled)
+            {
+                _animator.SetBool(PlayerState.isMoving.ToString(), false);
+            
+            }
+        }
+        else
+        {
+            IsMoving = false;
         }
 
-        if (context.canceled)
-        {
-            _animator.SetBool(PlayerState.isMoving.ToString(), false);
-            
-        }
     }
 
     private void SetFacing(Vector2 moveInput)
@@ -152,5 +172,10 @@ public class PlayerController : MonoBehaviour
         {
             _animator.SetTrigger(PlayerState.Attack.ToString());
         }
+    }
+
+    public void OnHit(int damage, Vector2 knockback)
+    {
+        _rb.velocity = new Vector2(knockback.x, knockback.y + _rb.velocity.y);
     }
 }

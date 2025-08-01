@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -6,13 +7,27 @@ using UnityEngine;
 /// </summary>
 public class AttackSystem : MonoBehaviour
 {
-    [Header("Melee Attack Settings")]
-    [Tooltip("Sát thương của đòn tấn công cận chiến.")]
-    public float meleeDamage = 20f;
+    [SerializeField] private int attackDamage =  10;
+    public Vector2 knockback = Vector2.zero;
 
-    [Header("Common Settings")]
-    [Tooltip("Layer của các đối tượng được coi là kẻ thù.")]
-    public LayerMask enemyLayers;
 
-    // Logic tấn công tầm xa đã được tạm thời loại bỏ để tập trung vào tấn công cận chiến.
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        Damageable damageable = other.GetComponent<Damageable>();
+
+        if (damageable != null)
+        {
+            float direction = Mathf.Sign(transform.parent.localScale.x);
+            direction = direction / (Mathf.Abs(direction));
+            Vector2 trueKnockback = new Vector2(Mathf.Abs(knockback.x)*direction, knockback.y);
+            bool gotHit = damageable.Hit(attackDamage, trueKnockback);
+            if (gotHit)
+            {
+                if (gameObject.name == "Player")
+                {
+                    Debug.Log(gameObject.name + " is attacking" + other.name);
+                }
+            }
+        }
+    }
 }

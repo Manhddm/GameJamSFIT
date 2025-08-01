@@ -32,7 +32,7 @@ public class TouchGround : MonoBehaviour
     private readonly RaycastHit2D[] _wallHits = new RaycastHit2D[3];
     private readonly RaycastHit2D[] _ceilingHits = new RaycastHit2D[1];
 
-    [FormerlySerializedAs("_collider2D")] public CapsuleCollider2D collider2D;
+    public CapsuleCollider2D collider2D;
 
     // Properties để các script khác có thể truy cập (chỉ đọc)
     public bool IsGrounded
