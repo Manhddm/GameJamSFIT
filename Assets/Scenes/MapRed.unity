@@ -820,6 +820,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7269326451964896461, guid: 3a7ac5116712ad0429a1d54402605325, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 8223218650176584005, guid: 3a7ac5116712ad0429a1d54402605325, type: 3}
     m_RemovedGameObjects: []
@@ -8951,29 +8955,13 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
-    - target: {fileID: 3468592582663016024, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
-      propertyPath: m_IsTrigger
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3468592582663016024, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
-      propertyPath: m_IncludeLayers.m_Bits
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3468592582663016024, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
-      propertyPath: m_Points.m_Paths.Array.data[0].Array.data[6].x
-      value: 0.043773428
-      objectReference: {fileID: 0}
     - target: {fileID: 4276229221703843213, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
       propertyPath: knockback.x
-      value: 10
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 4276229221703843213, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
       propertyPath: knockback.y
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 4276229221703843213, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
-      propertyPath: attackDamage
-      value: 30
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 9213775799316322347, guid: cd50704b3f111c2449cfc645c8c4b273, type: 3}
       propertyPath: m_LocalPosition.x

@@ -444,7 +444,7 @@ PolygonCollider2D:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -482,7 +482,7 @@ PolygonCollider2D:
       - {x: 0.109075464, y: 0.07165212}
       - {x: 0.122310184, y: 0.019485114}
       - {x: 0.10473319, y: -0.051653206}
-      - {x: 0.014458239, y: -0.120141685}
+      - {x: 0.043773428, y: -0.120141685}
       - {x: 0.15132742, y: -0.1206799}
       - {x: 0.20346443, y: -0.07296488}
       - {x: 0.22928815, y: -0.024796844}
@@ -501,5 +501,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf4cb8457f0aab34c98a77dc91269c23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attackDamage: 10
-  knockback: {x: 0, y: 0}
+  attackDamage: 30
+  knockback: {x: 10, y: 20}
