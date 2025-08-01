@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(TouchGround), typeof(Rigidbody2D))]
+[RequireComponent(typeof(TouchGround), typeof(Rigidbody2D), typeof(Damageable))]
 public class BossController : MonoBehaviour
 {
     public float walkSpeed;
@@ -67,6 +67,8 @@ public class BossController : MonoBehaviour
     private void Update()
     {
         HasTarget = detectionZone.detectedColliders.Count > 0;
+        if (AttackCooldown > 0)
+            AttackCooldown -= Time.deltaTime;
     }
 
     private void FixedUpdate()
@@ -111,6 +113,14 @@ public class BossController : MonoBehaviour
     [SerializeField]
     private bool _hasTarget = false;
 
+    public float AttackCooldown
+    {
+        get { return _animator.GetFloat(EnemyState.attackCooldown.ToString());}
+        set
+        {
+            _animator.SetFloat(EnemyState.attackCooldown.ToString(), Mathf.Max(0f, value));
+        }
+    }
     public bool HasTarget
     {
         get{return _hasTarget;}
