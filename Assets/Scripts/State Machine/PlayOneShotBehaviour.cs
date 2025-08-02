@@ -35,6 +35,7 @@ public class PlayOneShotBehaviour : StateMachineBehaviour
             {
                 AudioSource.PlayClipAtPoint(soundToPlay,animator.gameObject.transform.position,volume);
                 hasDelayedSoundPlay = true;
+                timeSinceEntered = 0f;
             }
         }
     }

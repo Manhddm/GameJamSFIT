@@ -6,18 +6,9 @@ using UnityEngine;
 [RequireComponent(typeof(TouchGround), typeof(Rigidbody2D), typeof(Damageable))]
 public class BossController : MonoBehaviour
 {
+    // Giữ lại biến tốc độ gốc, đơn giản và rõ ràng
     public float walkSpeed;
-    public float WalkSpeed{
-        get
-        {
-            if (_animator.GetBool(EnumEntity.canMove.ToString())) return walkSpeed;
-            return 0;
-        }
-        set
-        {
-            
-        }
-    }
+
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private TouchGround touchGround;
     private Animator _animator;
@@ -34,22 +25,15 @@ public class BossController : MonoBehaviour
     private WalkableDirection _walkableDirection = WalkableDirection.Right;
     public Vector2 walkDirectionVector = Vector2.right;
 
+    // Thuộc tính WalkDirection giờ chỉ thay đổi trạng thái và gọi hàm Flip
     private WalkableDirection WalkDirection
     {
         get { return _walkableDirection; }
         set
         {
             if (_walkableDirection == value) return;
-            gameObject.transform.localScale = new Vector3(gameObject.transform.localScale.x * -1,
-                gameObject.transform.localScale.y, gameObject.transform.localScale.z);
-            if (gameObject.transform.localScale.x > 0)
-            {
-                walkDirectionVector = Vector2.right;
-            }
-            else
-            {
-                walkDirectionVector = Vector2.left;
-            }
+            _walkableDirection = value;
+            Flip();
         }
     }
 
@@ -61,7 +45,7 @@ public class BossController : MonoBehaviour
         _animator = GetComponent<Animator>();
         touchGround = GetComponent<TouchGround>();
         detectionZone = GetComponentInChildren<DetectionZone>();
-        _damageable = GetComponentInChildren<Damageable>();
+        _damageable = GetComponent<Damageable>(); // Giả sử Damageable cùng cấp
     }
 
     private void Update()
@@ -73,6 +57,7 @@ public class BossController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        // Kiểm tra LockVelocity trước khi di chuyển
         if (!_damageable.LockVelocity)
             Move();
     }
@@ -83,27 +68,50 @@ public class BossController : MonoBehaviour
 
     private void Move()
     {
+        // Kiểm tra va chạm tường để đổi hướng
         if (touchGround.IsGrounded && touchGround.IsOnWall)
         {
             FlipDirection();
         }
 
-        rb.velocity = new Vector2(WalkSpeed * walkDirectionVector.x, rb.velocity.y);
+        // Tính toán tốc độ di chuyển thực tế ngay tại đây
+        float currentMoveSpeed = 0f;
+        if (_animator.GetBool(EnumEntity.canMove.ToString()))
+        {
+            currentMoveSpeed = walkSpeed;
+        }
+
+        // Áp dụng vận tốc
+        rb.velocity = new Vector2(currentMoveSpeed * walkDirectionVector.x, rb.velocity.y);
     }
 
+    // Hàm lật người, chỉ chịu trách nhiệm về hình ảnh và vector
+    private void Flip()
+    {
+        // Lật hình ảnh
+        transform.localScale = new Vector3(transform.localScale.x * -1, transform.localScale.y, transform.localScale.z);
+
+        // Cập nhật vector hướng đi
+        if (WalkDirection == WalkableDirection.Right)
+        {
+            walkDirectionVector = Vector2.right;
+        }
+        else
+        {
+            walkDirectionVector = Vector2.left;
+        }
+    }
+
+    // Hàm đổi hướng logic, đã được đơn giản hóa
     private void FlipDirection()
     {
         if (WalkDirection == WalkableDirection.Right)
         {
             WalkDirection = WalkableDirection.Left;
         }
-        else if (WalkDirection == WalkableDirection.Left)
-        {
-            WalkDirection = WalkableDirection.Right;
-        }
         else
         {
-            Debug.Log("Error");
+            WalkDirection = WalkableDirection.Right;
         }
     }
 
@@ -115,7 +123,7 @@ public class BossController : MonoBehaviour
 
     public float AttackCooldown
     {
-        get { return _animator.GetFloat(EnemyState.attackCooldown.ToString());}
+        get { return _animator.GetFloat(EnemyState.attackCooldown.ToString()); }
         set
         {
             _animator.SetFloat(EnemyState.attackCooldown.ToString(), Mathf.Max(0f, value));
@@ -123,18 +131,19 @@ public class BossController : MonoBehaviour
     }
     public bool HasTarget
     {
-        get{return _hasTarget;}
+        get { return _hasTarget; }
         set
         {
             _hasTarget = value;
-            _animator.SetBool(EnemyState.hasTarget.ToString(),value);
+            _animator.SetBool(EnemyState.hasTarget.ToString(), value);
         }
     }
 
     #endregion
     
+    // Hàm xử lý khi bị tấn công
     public void OnHit(int damage, Vector2 knockback)
     {
-        rb.velocity = new Vector2(knockback.x, knockback.y + rb.velocity.y);
+        rb.velocity = new Vector2(knockback.x, rb.velocity.y + knockback.y);
     }
 }

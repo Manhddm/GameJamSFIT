@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5384201086334447193}
   - component: {fileID: 1651751599430240694}
   - component: {fileID: 2816596445995225140}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: Attack
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -40,7 +40,7 @@ PolygonCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3370608034298195418}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
@@ -77,11 +77,12 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 0, y: 1}
-      - {x: -0.95105654, y: 0.30901697}
-      - {x: -0.5877852, y: -0.80901706}
-      - {x: 0.58778536, y: -0.80901694}
-      - {x: 0.9510565, y: 0.30901712}
+    - - {x: 0.23880863, y: -0.06985879}
+      - {x: 0.13790697, y: -0.14949393}
+      - {x: 0.2623697, y: -0.30274463}
+      - {x: 0.5209185, y: -0.31229684}
+      - {x: 0.57331276, y: -0.1822039}
+      - {x: 0.5307541, y: -0.015761405}
   m_UseDelaunayMesh: 0
 --- !u!114 &2816596445995225140
 MonoBehaviour:
@@ -113,7 +114,7 @@ GameObject:
   - component: {fileID: 508048083492703946}
   - component: {fileID: 7787103856531401927}
   - component: {fileID: 9031081583602899300}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BossRed
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -128,7 +129,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6823802790418673538}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1.5, y: 0.03, z: 0}
   m_LocalScale: {x: 4, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
@@ -231,7 +232,7 @@ CapsuleCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 384
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
@@ -287,7 +288,19 @@ MonoBehaviour:
   animator: {fileID: 0}
   damageable:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 9031081583602899300}
+        m_TargetAssemblyTypeName: BossController, Assembly-CSharp
+        m_MethodName: OnHit
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   maxHealth: 100
   isInvincible: 0
   invincibleTimer: 0.25
@@ -333,7 +346,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 178cb0147d70fc940a7c161b6068cca6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkSpeed: 0
+  walkSpeed: 5
   rb: {fileID: 0}
   touchGround: {fileID: 0}
   detectionZone: {fileID: 0}
@@ -350,7 +363,7 @@ GameObject:
   - component: {fileID: 9063231243620450176}
   - component: {fileID: 3133574894294635568}
   - component: {fileID: 7386752286965308114}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: DetectionZone
   m_TagString: Untagged
   m_Icon: {fileID: 0}

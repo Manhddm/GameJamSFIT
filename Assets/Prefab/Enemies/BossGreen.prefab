@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 8144631400622071362}
   - component: {fileID: 4555276220843035914}
   - component: {fileID: 5237706048522188476}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BossGreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -155,7 +155,7 @@ CapsuleCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 384
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
@@ -220,7 +220,19 @@ MonoBehaviour:
   animator: {fileID: 0}
   damageable:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 5237706048522188476}
+        m_TargetAssemblyTypeName: BossController, Assembly-CSharp
+        m_MethodName: OnHit
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   maxHealth: 100
   isInvincible: 0
   invincibleTimer: 0.25
@@ -236,7 +248,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 178cb0147d70fc940a7c161b6068cca6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkSpeed: 0
+  walkSpeed: 5
   rb: {fileID: 0}
   touchGround: {fileID: 0}
   detectionZone: {fileID: 0}
@@ -253,7 +265,7 @@ GameObject:
   - component: {fileID: 7702465093742689821}
   - component: {fileID: 244805301215420453}
   - component: {fileID: 1124997822417194283}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: DetectionZone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -344,7 +356,7 @@ GameObject:
   - component: {fileID: 2011620083076218108}
   - component: {fileID: 1116371576934780999}
   - component: {fileID: 5959617613959724504}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: Attack
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -373,7 +385,7 @@ PolygonCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4893842905061240481}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
@@ -410,11 +422,12 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 0, y: 1}
-      - {x: -0.95105654, y: 0.30901697}
-      - {x: -0.5877852, y: -0.80901706}
-      - {x: 0.58778536, y: -0.80901694}
-      - {x: 0.9510565, y: 0.30901712}
+    - - {x: 0.48433113, y: -0.024819136}
+      - {x: 0.24222654, y: -0.10512227}
+      - {x: 0.14924198, y: -0.2755496}
+      - {x: 0.44739878, y: -0.32468456}
+      - {x: 0.563385, y: -0.25184122}
+      - {x: 0.57903385, y: -0.11214146}
   m_UseDelaunayMesh: 0
 --- !u!114 &5959617613959724504
 MonoBehaviour:

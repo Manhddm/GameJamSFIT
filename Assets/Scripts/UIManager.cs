@@ -21,7 +21,7 @@ public class UIManager : MonoBehaviour
     public void CharacterTookHealth(GameObject character, int healthReceived)
     {
         Vector3 spawnPosition = Camera.main.WorldToScreenPoint(character.transform.position);
-        TMP_Text tmpText = Instantiate(healthTextPrefab, spawnPosition, Quaternion.identity).GetComponent<TMP_Text>();
+        TMP_Text tmpText = Instantiate(healthTextPrefab, spawnPosition, Quaternion.identity, gameCanvas.transform).GetComponent<TMP_Text>();
         tmpText.text = healthReceived.ToString();
     }
 
